@@ -4,15 +4,17 @@ import React from "react";
 
 export function RecommendationBadge({ value }: { value: "SHORTLIST" | "CONSIDER" | "DECLINE" }) {
   const map: Record<string, { bg: string; border: string; text: string }> = {
-    SHORTLIST: { bg: "#ECFDF5", border: "#A7F3D0", text: "#15803D" },
-    CONSIDER: { bg: "#FFFBEB", border: "#FDE68A", text: "#B45309" },
-    DECLINE: { bg: "#FEF2F2", border: "#FECACA", text: "#B91C1C" }
+    SHORTLIST: { bg: "#dcfce7", border: "#86efac", text: "#166534" },
+    CONSIDER: { bg: "#fef9c3", border: "#fde047", text: "#854d0e" },
+    DECLINE: { bg: "#fee2e2", border: "#fecaca", text: "#991b1b" }
   };
   const m = map[value];
   return (
-    <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold" style={{ background: m.bg, border: `1px solid ${m.border}`, color: m.text }}>
+    <span 
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-150 hover:brightness-95 cursor-default select-none shadow-sm" 
+      style={{ background: m.bg, border: `1px solid ${m.border}`, color: m.text }}
+    >
       {value}
     </span>
   );
 }
-
