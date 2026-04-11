@@ -30,6 +30,7 @@ export type DashboardState = {
   screening: ScreeningState;
   results?: CandidatesResult;
   applicants?: any[];
+  loading: boolean;
 };
 
 const initialState: DashboardState = {
@@ -38,7 +39,8 @@ const initialState: DashboardState = {
   jobCreate: { loading: false, error: undefined, createdJobId: undefined },
   screening: { triggering: false, error: undefined, lastScreeningResult: undefined },
   results: undefined,
-  applicants: undefined
+  applicants: undefined,
+  loading: false
 };
 
 export const thunkListJobs = createAsyncThunk("dashboard/listJobs", async () => {
@@ -110,8 +112,15 @@ const slice = createSlice({
       .addCase(thunkCreateJob.rejected, (state, action) => {
         state.jobCreate = { loading: false, error: action.error.message };
       })
+      .addCase(thunkFetchResults.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(thunkFetchResults.fulfilled, (state, action) => {
+        state.loading = false;
         state.results = action.payload;
+      })
+      .addCase(thunkFetchResults.rejected, (state) => {
+        state.loading = false;
       })
       .addCase(thunkFetchApplicants.fulfilled, (state, action) => {
         state.applicants = action.payload;
