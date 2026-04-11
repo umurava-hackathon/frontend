@@ -590,56 +590,58 @@ export default function IngestPage() {
     <section className="space-y-8 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 px-4 sm:px-0">
         <div className="flex-1">
-          <h1 className="page-title">Applicants ingestion</h1>
-          <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+          <h1 className="text-2xl font-semibold text-neutral-800">Applicants ingestion</h1>
+          <p className="mt-1 text-sm text-neutral-500">
             Add candidates from structured Umurava profiles or from external sources (CSV + resume PDF).
           </p>
         </div>
         <button
           type="button"
           onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
-          className="w-full sm:w-auto rounded-xl px-6 py-3 bg-[#1F2A37] text-white hover:bg-[#152030] transition-card focus-ring shadow-soft font-medium"
+          className="w-full sm:w-auto px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors shadow-sm focus-ring"
         >
           Continue to screening
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl sm:shadow-soft border-y sm:border border-gray-200 overflow-hidden">
-        <div className="flex border-b border-gray-100 p-2 sm:p-4 bg-gray-50/50">
+      <div className="bg-white rounded-xl border border-neutral-200 shadow-card overflow-hidden">
+        <div className="flex border-b border-neutral-200 bg-white px-2">
           <button
             type="button"
-            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium transition-card focus-ring ${tab === "umurava" ? "bg-[#1F2A37] text-white shadow-soft" : "bg-transparent text-gray-600 hover:bg-gray-100"}`}
+            className={`px-6 py-4 text-sm font-medium transition-all relative ${tab === "umurava" ? "text-primary-500" : "text-neutral-500 hover:text-neutral-700"}`}
             onClick={() => setTab("umurava")}
           >
             Umurava profiles
+            {tab === "umurava" && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary-500" />}
           </button>
           <button
             type="button"
-            className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl text-sm font-medium transition-card focus-ring ${tab === "external" ? "bg-[#1F2A37] text-white shadow-soft" : "bg-transparent text-gray-600 hover:bg-gray-100"}`}
+            className={`px-6 py-4 text-sm font-medium transition-all relative ${tab === "external" ? "text-primary-500" : "text-neutral-500 hover:text-neutral-700"}`}
             onClick={() => setTab("external")}
           >
             External (CSV + PDF)
+            {tab === "external" && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary-500" />}
           </button>
         </div>
 
-        <div className="p-4 sm:p-8">
+        <div className="p-6 sm:p-10">
           {tab === "umurava" ? (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <h2 className="text-sm font-bold text-gray-900">Talent Profile Ingestion</h2>
-                  <p className="text-xs text-gray-500 italic">Following official Umurava Talent Schema</p>
+                  <h2 className="text-base font-semibold text-neutral-800">Talent Profile Ingestion</h2>
+                  <p className="text-xs text-neutral-400">Following official Umurava Talent Schema</p>
                 </div>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="flex bg-neutral-100 p-1 rounded-lg">
                   <button
                     onClick={() => setUmuravaInputMode("paste")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${umuravaMode === "paste" ? "bg-white text-[#1F2A37] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${umuravaMode === "paste" ? "bg-white text-primary-500 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
                   >
                     JSON Paste
                   </button>
                   <button
                     onClick={() => setUmuravaInputMode("upload")}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${umuravaMode === "upload" ? "bg-white text-[#1F2A37] shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${umuravaMode === "upload" ? "bg-white text-primary-500 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
                   >
                     File Upload
                   </button>
@@ -649,7 +651,7 @@ export default function IngestPage() {
               {umuravaMode === "paste" ? (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-900">Paste candidate profiles (JSON array)</label>
+                    <label className="text-[13px] font-medium text-neutral-700">Paste candidate profiles (JSON array)</label>
                     <textarea
                       value={profilesJson}
                       onChange={(e) => {
@@ -657,13 +659,13 @@ export default function IngestPage() {
                         handleValidateProfiles(e.target.value);
                       }}
                       placeholder={`[\n  {\n    "firstName": "Amara",\n    "lastName": "Diallo",\n    "email": "amara@example.com",\n    "headline": "Backend Engineer – Node.js & APIs",\n    "location": "Kigali, Rwanda",\n    "skills": [{ "name": "Node.js", "level": "Expert", "yearsOfExperience": 5 }],\n    "experience": [{\n      "company": "Andela",\n      "role": "Backend Engineer",\n      "Start Date": "2020-01",\n      "End Date": "Present",\n      "description": "...",\n      "technologies": ["Node.js"],\n      "Is Current": true\n    }],\n    "education": [{\n      "institution": "University of Rwanda",\n      "degree": "Bachelor's",\n      "Field of Study": "Computer Science",\n      "Start Year": 2015,\n      "End Year": 2019\n    }],\n    "projects": [{\n      "name": "TalentHub",\n      "description": "...",\n      "technologies": ["Node.js"],\n      "role": "Lead",\n      "Start Date": "2023-01",\n      "End Date": "2023-06"\n    }],\n    "availability": {\n      "status": "Available",\n      "type": "Full-time"\n    }\n  }\n]`}
-                      className="w-full min-h-[200px] rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs font-mono focus-ring transition-card"
+                      className="w-full min-h-[240px] rounded-lg border border-neutral-300 bg-neutral-50 px-4 py-3 text-[13px] font-mono focus-ring transition-card"
                     />
                   </div>
                 </div>
               ) : (
                 <div
-                  className={`rounded-2xl border-2 border-dashed transition-card p-10 text-center cursor-pointer ${validatedProfiles.length > 0 ? "border-green-300 bg-green-50" : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"}`}
+                  className={`rounded-xl border-2 border-dashed transition-card p-12 text-center cursor-pointer ${validatedProfiles.length > 0 ? "border-success bg-successLight/30" : "border-neutral-300 bg-white hover:border-primary-500 hover:bg-primary-50"}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -683,58 +685,56 @@ export default function IngestPage() {
                     }}
                   />
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">
+                    <div className="text-sm font-medium text-neutral-700">
                       {validatedProfiles.length > 0 ? (
-                        <span>File loaded: <span className="text-green-700 font-bold">JSON ready ({validatedProfiles.length} profiles)</span></span>
+                        <span>File loaded: <span className="text-success font-bold">{validatedProfiles.length} profiles ready</span></span>
                       ) : (
-                        <span>Drop a <span className="font-bold">.json</span> file here, or click to choose</span>
+                        <span>Drop a <span className="font-bold">.json</span> file here, or <span className="text-primary-500 underline">browse</span></span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-400 font-mono italic">Official Umurava schema validation active</div>
+                    <div className="text-[11px] text-neutral-400 font-mono italic">Official Umurava schema validation active</div>
                   </div>
                 </div>
               )}
 
               {umuravaErrors.length > 0 && (
-                <div className="space-y-2 p-4 rounded-xl bg-red-50 border border-red-100">
-                  <div className="text-xs font-bold text-red-800 uppercase tracking-widest">Validation Errors</div>
+                <div className="p-4 rounded-lg bg-dangerLight text-danger border border-danger/20">
+                  <div className="text-[11px] font-bold uppercase tracking-widest mb-2">Validation Errors</div>
                   <ul className="list-disc list-inside space-y-1">
                     {umuravaErrors.map((err, i) => (
-                      <li key={i} className="text-xs text-red-600">{err}</li>
+                      <li key={i} className="text-xs">{err}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
               {validatedProfiles.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                      {validatedProfiles.length} profiles ready to ingest
-                    </div>
+                <div className="space-y-6">
+                  <div className="text-[12px] font-semibold text-success bg-successLight px-3 py-1 rounded-full uppercase tracking-wider inline-block">
+                    {validatedProfiles.length} profiles ready to ingest
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {validatedProfiles.map((p, idx) => {
                       const isMissingOptional = !p.bio || !p.languages?.length || !p.certifications?.length || !p.socialLinks || Object.keys(p.socialLinks).length === 0;
                       return (
-                        <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-white space-y-3 shadow-sm hover:shadow-soft transition-card relative">
+                        <div key={idx} className="p-5 rounded-xl border border-neutral-200 bg-white space-y-4 shadow-sm hover:shadow-card transition-card relative">
                           <div className="flex justify-between items-start">
-                            <div className="space-y-0.5 max-w-[70%]">
-                              <h3 className="text-sm font-bold text-gray-900 truncate">{p.firstName} {p.lastName}</h3>
-                              <p className="text-[11px] text-gray-500 font-medium truncate">{p.headline}</p>
+                            <div className="space-y-1 max-w-[70%]">
+                              <h3 className="text-[14px] font-semibold text-neutral-800 truncate">{p.firstName} {p.lastName}</h3>
+                              <p className="text-[13px] text-neutral-500 truncate">{p.headline}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${
-                                p.availability.status === "Available" ? "bg-green-100 text-green-700 border-green-200" :
-                                p.availability.status === "Open to Opportunities" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                                "bg-gray-100 text-gray-500 border-gray-200"
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
+                                p.availability.status === "Available" ? "bg-successLight text-success border-success/20" :
+                                p.availability.status === "Open to Opportunities" ? "bg-warningLight text-warning border-warning/20" :
+                                "bg-neutral-100 text-neutral-500 border-neutral-200"
                               }`}>
                                 {p.availability.status}
                               </span>
                               {isMissingOptional && (
                                 <div className="tooltip-container">
-                                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                   </svg>
                                   <div className="tooltip-text">Some optional fields missing — AI scoring may be less detailed</div>
@@ -743,25 +743,24 @@ export default function IngestPage() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3 text-[11px] text-gray-500">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          <div className="flex items-center gap-3 text-[12px] text-neutral-400">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                               <span className="truncate">{p.location}</span>
                             </div>
-                            <div className="font-bold text-gray-300">|</div>
+                            <div className="h-3 w-[1px] bg-neutral-200" />
                             <div className="flex-shrink-0">{p.experience.length} roles</div>
-                            <div className="font-bold text-gray-300">|</div>
+                            <div className="h-3 w-[1px] bg-neutral-200" />
                             <div className="flex-shrink-0">{p.projects.length} projects</div>
                           </div>
 
                           <div className="flex flex-wrap gap-1.5 items-center">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.skills.length} skills:</span>
                             {p.skills.slice(0, 3).map((s, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[10px] text-gray-600 font-medium">
+                              <span key={i} className="px-2 py-0.5 rounded bg-primary-50 text-[11px] text-primary-500 font-medium">
                                 {s.name}
                               </span>
                             ))}
-                            {p.skills.length > 3 && <span className="text-[10px] text-gray-400">+{p.skills.length - 3} more</span>}
+                            {p.skills.length > 3 && <span className="text-[11px] text-neutral-400">+{p.skills.length - 3} more</span>}
                           </div>
                         </div>
                       );
@@ -771,63 +770,63 @@ export default function IngestPage() {
               )}
 
               {ingestResultA && (
-                <div className="p-5 rounded-xl bg-green-50 border border-green-100 space-y-4 animate-fade-in-up shadow-sm">
-                  <div className="flex items-center gap-3 text-green-800">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <div className="p-6 rounded-xl bg-successLight border border-success/20 space-y-4 animate-fade-in-up shadow-sm">
+                  <div className="flex items-center gap-3 text-success">
+                    <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-sm font-bold">{ingestResultA.count} profiles ingested successfully. Ready to run screening.</span>
+                    <span className="text-sm font-semibold">{ingestResultA.count} profiles ingested successfully. Ready to run screening.</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-[#1F2A37] px-5 py-2.5 rounded-lg hover:bg-[#152030] transition-colors shadow-sm focus-ring"
-                    >
-                      Run screening now
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
+                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-neutral-800 px-6 py-3 rounded-lg hover:bg-neutral-900 transition-colors shadow-sm focus-ring"
+                  >
+                    Run screening now
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                  </button>
                 </div>
               )}
 
               {ingestErrorA && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-sm font-bold text-red-600 animate-pulse-slow">
+                <div className="p-4 rounded-lg bg-dangerLight text-danger text-sm font-semibold border border-danger/20">
                   {ingestErrorA}
                 </div>
               )}
 
               {!isIngested && (
-                <button
-                  type="button"
-                  disabled={loadingA || validatedProfiles.length === 0}
-                  onClick={() => void submitUmuravaProfiles()}
-                  className="w-full sm:w-auto rounded-xl px-10 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 transition-all font-bold focus-ring shadow-soft flex items-center justify-center gap-3"
-                >
-                  {loadingA ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Ingesting profiles...
-                    </>
-                  ) : (
-                    `Ingest ${validatedProfiles.length} profiles`
-                  )}
-                </button>
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    disabled={loadingA || validatedProfiles.length === 0}
+                    onClick={() => void submitUmuravaProfiles()}
+                    className="px-10 py-3.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-sm flex items-center gap-3"
+                  >
+                    {loadingA ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Ingesting...
+                      </>
+                    ) : (
+                      `Ingest ${validatedProfiles.length} profiles`
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-10">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-gray-900">1) Upload CSV</div>
-                  <div className="text-xs text-gray-500">We auto-detect headers for mapping</div>
+                  <div className="text-sm font-semibold text-neutral-800">1) Upload CSV</div>
+                  <div className="text-xs text-neutral-400">We auto-detect headers for mapping</div>
                 </div>
                 <div
-                  className={`rounded-2xl border-2 border-dashed transition-card p-8 text-center cursor-pointer ${csvFile ? "border-green-300 bg-green-50" : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"}`}
+                  className={`rounded-xl border-2 border-dashed transition-card p-10 text-center cursor-pointer ${csvFile ? "border-success bg-successLight/30" : "border-neutral-300 bg-white hover:border-primary-500 hover:bg-primary-50"}`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
                     e.preventDefault();
@@ -847,14 +846,14 @@ export default function IngestPage() {
                     }}
                   />
                   <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700">
+                    <div className="text-sm font-medium text-neutral-700">
                       {csvFile ? (
-                        <span>Selected: <span className="text-green-700 font-bold">{csvFile.name}</span></span>
+                        <span>Selected: <span className="text-success font-bold">{csvFile.name}</span></span>
                       ) : (
-                        <span>Drop CSV here or <span className="text-blue-600 underline">browse files</span></span>
+                        <span>Drop CSV here or <span className="text-primary-500 underline">browse files</span></span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-400">Supported format: .csv (UTF-8)</div>
+                    <div className="text-[11px] text-neutral-400 uppercase tracking-widest font-semibold">Supported format: .csv (UTF-8)</div>
                   </div>
                 </div>
               </div>
@@ -891,30 +890,30 @@ export default function IngestPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-8">
+                  <div className="rounded-xl border border-neutral-200 bg-white p-6 sm:p-8 space-y-10 shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
-                        <div className="text-sm font-medium text-gray-900">2) Map CSV columns</div>
-                        <div className="text-xs text-gray-500">Connect headers to Umurava's candidate schema.</div>
+                        <div className="text-sm font-semibold text-neutral-800">2) Map CSV columns</div>
+                        <div className="text-xs text-neutral-400">Connect headers to Umurava's candidate schema.</div>
                       </div>
-                      <div className="text-xs font-bold text-[#1F2A37] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">
+                      <div className="text-[11px] font-bold text-primary-500 bg-primary-50 px-3 py-1 rounded-full uppercase tracking-widest">
                         {csvHeaders.length} headers detected
                       </div>
                     </div>
 
                     {csvFormat === "simple" ? (
-                      <div className="space-y-8">
+                      <div className="space-y-10">
                         {SIMPLE_MAPPING_FIELDS.map((section) => (
-                          <div key={section.section} className="space-y-4">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1">{section.section}</div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                          <div key={section.section} className="space-y-5">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-2">{section.section}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
                               {section.fields.map((f) => (
                                 <label key={f.key} className="block space-y-1.5">
-                                  <div className="text-xs font-semibold text-gray-700">{f.label}</div>
+                                  <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
                                   <select
                                     value={simpleMapping[f.key]}
                                     onChange={(e) => setSimpleMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-ring transition-card"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
                                   >
                                     <option value="">(not provided)</option>
                                     {csvHeaders.map((h) => (
@@ -926,18 +925,18 @@ export default function IngestPage() {
                             </div>
                           </div>
                         ))}
-                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                          <p className="text-xs text-gray-500 leading-relaxed italic">
+                        <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-100">
+                          <p className="text-[12px] text-neutral-500 leading-relaxed italic">
                             <strong>Note:</strong> Simple format creates one experience entry and one education entry per candidate. Missing fields get safe defaults. For richer profiles, use Detailed format or the Umurava Profiles tab.
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-10">
+                      <div className="space-y-12">
                         {/* Detailed Basic Info */}
-                        <div className="space-y-4">
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1">Basic Info</div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="space-y-5">
+                          <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-2">Basic Info</div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
                             {[
                               { key: "fullName", label: "Full Name" },
                               { key: "email", label: "Email" },
@@ -946,11 +945,11 @@ export default function IngestPage() {
                               { key: "bio", label: "Bio" }
                             ].map((f) => (
                               <label key={f.key} className="block space-y-1.5">
-                                <div className="text-xs font-semibold text-gray-700">{f.label}</div>
+                                <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
                                 <select
                                   value={(detailedMapping as any)[f.key]}
                                   onChange={(e) => setDetailedMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-ring transition-card"
+                                  className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
                                 >
                                   <option value="">(not provided)</option>
                                   {csvHeaders.map((h) => (
@@ -963,13 +962,13 @@ export default function IngestPage() {
                         </div>
 
                         {/* Detailed Skills */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Skills (Max 5)</div>
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Skills (Max 5)</div>
                             {detailedMapping.skills.length < 5 && (
                               <button 
                                 onClick={() => setDetailedMapping(prev => ({ ...prev, skills: [...prev.skills, { name: "", level: "", years: "" }] }))}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                                className="text-[11px] font-bold text-primary-500 hover:text-primary-600 uppercase tracking-widest"
                               >
                                 + Add skill column set
                               </button>
@@ -977,9 +976,9 @@ export default function IngestPage() {
                           </div>
                           <div className="space-y-4">
                             {detailedMapping.skills.map((s, idx) => (
-                              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-gray-50/50 border border-gray-100 relative">
-                                <label className="block space-y-1">
-                                  <div className="text-[10px] font-bold text-gray-500">Skill {idx+1} Name</div>
+                              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 rounded-xl bg-neutral-50/50 border border-neutral-100 relative">
+                                <label className="block space-y-1.5">
+                                  <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Skill {idx+1} Name</div>
                                   <select
                                     value={s.name}
                                     onChange={(e) => {
@@ -987,14 +986,14 @@ export default function IngestPage() {
                                       next[idx].name = e.target.value;
                                       setDetailedMapping(prev => ({ ...prev, skills: next }));
                                     }}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                   >
                                     <option value="">(select column)</option>
                                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                   </select>
                                 </label>
-                                <label className="block space-y-1">
-                                  <div className="text-[10px] font-bold text-gray-500">Level</div>
+                                <label className="block space-y-1.5">
+                                  <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Level</div>
                                   <select
                                     value={s.level}
                                     onChange={(e) => {
@@ -1002,14 +1001,14 @@ export default function IngestPage() {
                                       next[idx].level = e.target.value;
                                       setDetailedMapping(prev => ({ ...prev, skills: next }));
                                     }}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                   >
                                     <option value="">(select column)</option>
                                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                   </select>
                                 </label>
-                                <label className="block space-y-1">
-                                  <div className="text-[10px] font-bold text-gray-500">Years</div>
+                                <label className="block space-y-1.5">
+                                  <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Years</div>
                                   <select
                                     value={s.years}
                                     onChange={(e) => {
@@ -1017,7 +1016,7 @@ export default function IngestPage() {
                                       next[idx].years = e.target.value;
                                       setDetailedMapping(prev => ({ ...prev, skills: next }));
                                     }}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                   >
                                     <option value="">(select column)</option>
                                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -1026,7 +1025,7 @@ export default function IngestPage() {
                                 {idx > 0 && (
                                   <button 
                                     onClick={() => setDetailedMapping(prev => ({ ...prev, skills: prev.skills.filter((_, i) => i !== idx) }))}
-                                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 flex items-center justify-center shadow-sm"
+                                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-danger flex items-center justify-center shadow-sm transition-colors"
                                   >
                                     ×
                                   </button>
@@ -1037,13 +1036,13 @@ export default function IngestPage() {
                         </div>
 
                         {/* Detailed Experience */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Experience (Max 3)</div>
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Experience (Max 3)</div>
                             {detailedMapping.experience.length < 3 && (
                               <button 
                                 onClick={() => setDetailedMapping(prev => ({ ...prev, experience: [...prev.experience, { company: "", role: "", start: "", end: "", description: "", technologies: "" }] }))}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                                className="text-[11px] font-bold text-primary-500 hover:text-primary-600 uppercase tracking-widest"
                               >
                                 + Add experience column set
                               </button>
@@ -1051,11 +1050,11 @@ export default function IngestPage() {
                           </div>
                           <div className="space-y-6">
                             {detailedMapping.experience.map((exp, idx) => (
-                              <div key={idx} className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 space-y-4 relative">
-                                <div className="text-[10px] font-bold text-gray-400 italic">Role {idx+1}</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Company</div>
+                              <div key={idx} className="p-6 rounded-xl bg-neutral-50/50 border border-neutral-100 space-y-5 relative">
+                                <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider italic">Role {idx+1}</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Company</div>
                                     <select
                                       value={exp.company}
                                       onChange={(e) => {
@@ -1063,14 +1062,14 @@ export default function IngestPage() {
                                         next[idx].company = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, experience: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Job Title</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Job Title</div>
                                     <select
                                       value={exp.role}
                                       onChange={(e) => {
@@ -1078,15 +1077,15 @@ export default function IngestPage() {
                                         next[idx].role = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, experience: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
                                   <div className="grid grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                      <div className="text-[10px] font-bold text-gray-500">Start Date</div>
+                                    <label className="block space-y-1.5">
+                                      <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Start Date</div>
                                       <select
                                         value={exp.start}
                                         onChange={(e) => {
@@ -1094,15 +1093,15 @@ export default function IngestPage() {
                                           next[idx].start = e.target.value;
                                           setDetailedMapping(prev => ({ ...prev, experience: next }));
                                         }}
-                                        className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                        className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                       >
                                         <option value="">(select column)</option>
                                         {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                       </select>
-                                      <p className="text-[9px] text-gray-400">YYYY-MM or MM/YYYY</p>
+                                      <p className="text-[9px] text-neutral-400">YYYY-MM or MM/YYYY</p>
                                     </label>
-                                    <label className="block space-y-1">
-                                      <div className="text-[10px] font-bold text-gray-500">End Date</div>
+                                    <label className="block space-y-1.5">
+                                      <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">End Date</div>
                                       <select
                                         value={exp.end}
                                         onChange={(e) => {
@@ -1110,16 +1109,16 @@ export default function IngestPage() {
                                           next[idx].end = e.target.value;
                                           setDetailedMapping(prev => ({ ...prev, experience: next }));
                                         }}
-                                        className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                        className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                       >
                                         <option value="">(select column)</option>
                                         {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                       </select>
-                                      <p className="text-[9px] text-gray-400">YYYY-MM or Present</p>
+                                      <p className="text-[9px] text-neutral-400">YYYY-MM or Present</p>
                                     </label>
                                   </div>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Technologies (comma separated)</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Technologies</div>
                                     <select
                                       value={exp.technologies}
                                       onChange={(e) => {
@@ -1127,15 +1126,15 @@ export default function IngestPage() {
                                         next[idx].technologies = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, experience: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
                                 </div>
-                                <label className="block space-y-1">
-                                  <div className="text-[10px] font-bold text-gray-500">Description</div>
+                                <label className="block space-y-1.5">
+                                  <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Description</div>
                                   <select
                                     value={exp.description}
                                     onChange={(e) => {
@@ -1143,7 +1142,7 @@ export default function IngestPage() {
                                       next[idx].description = e.target.value;
                                       setDetailedMapping(prev => ({ ...prev, experience: next }));
                                     }}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                   >
                                     <option value="">(select column)</option>
                                     {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -1152,7 +1151,7 @@ export default function IngestPage() {
                                 {idx > 0 && (
                                   <button 
                                     onClick={() => setDetailedMapping(prev => ({ ...prev, experience: prev.experience.filter((_, i) => i !== idx) }))}
-                                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 flex items-center justify-center shadow-sm"
+                                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-danger flex items-center justify-center shadow-sm transition-colors"
                                   >
                                     ×
                                   </button>
@@ -1163,13 +1162,13 @@ export default function IngestPage() {
                         </div>
 
                         {/* Detailed Education */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Education (Max 2)</div>
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Education (Max 2)</div>
                             {detailedMapping.education.length < 2 && (
                               <button 
                                 onClick={() => setDetailedMapping(prev => ({ ...prev, education: [...prev.education, { institution: "", degree: "", field: "", start: "", end: "" }] }))}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                                className="text-[11px] font-bold text-primary-500 hover:text-primary-600 uppercase tracking-widest"
                               >
                                 + Add education column set
                               </button>
@@ -1177,11 +1176,11 @@ export default function IngestPage() {
                           </div>
                           <div className="space-y-6">
                             {detailedMapping.education.map((edu, idx) => (
-                              <div key={idx} className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 space-y-4 relative">
-                                <div className="text-[10px] font-bold text-gray-400 italic">Degree {idx+1}</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Institution</div>
+                              <div key={idx} className="p-6 rounded-xl bg-neutral-50/50 border border-neutral-100 space-y-5 relative">
+                                <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider italic">Degree {idx+1}</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Institution</div>
                                     <select
                                       value={edu.institution}
                                       onChange={(e) => {
@@ -1189,14 +1188,14 @@ export default function IngestPage() {
                                         next[idx].institution = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, education: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Degree</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Degree</div>
                                     <select
                                       value={edu.degree}
                                       onChange={(e) => {
@@ -1204,14 +1203,14 @@ export default function IngestPage() {
                                         next[idx].degree = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, education: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Field of Study</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Field of Study</div>
                                     <select
                                       value={edu.field}
                                       onChange={(e) => {
@@ -1219,15 +1218,15 @@ export default function IngestPage() {
                                         next[idx].field = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, education: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
                                   <div className="grid grid-cols-2 gap-4">
-                                    <label className="block space-y-1">
-                                      <div className="text-[10px] font-bold text-gray-500">Start Year</div>
+                                    <label className="block space-y-1.5">
+                                      <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Start Year</div>
                                       <select
                                         value={edu.start}
                                         onChange={(e) => {
@@ -1235,14 +1234,14 @@ export default function IngestPage() {
                                           next[idx].start = e.target.value;
                                           setDetailedMapping(prev => ({ ...prev, education: next }));
                                         }}
-                                        className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                        className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                       >
                                         <option value="">(select column)</option>
                                         {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                       </select>
                                     </label>
-                                    <label className="block space-y-1">
-                                      <div className="text-[10px] font-bold text-gray-500">End Year</div>
+                                    <label className="block space-y-1.5">
+                                      <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">End Year</div>
                                       <select
                                         value={edu.end}
                                         onChange={(e) => {
@@ -1250,7 +1249,7 @@ export default function IngestPage() {
                                           next[idx].end = e.target.value;
                                           setDetailedMapping(prev => ({ ...prev, education: next }));
                                         }}
-                                        className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                        className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                       >
                                         <option value="">(select column)</option>
                                         {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -1261,7 +1260,7 @@ export default function IngestPage() {
                                 {idx > 0 && (
                                   <button 
                                     onClick={() => setDetailedMapping(prev => ({ ...prev, education: prev.education.filter((_, i) => i !== idx) }))}
-                                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 flex items-center justify-center shadow-sm"
+                                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-danger flex items-center justify-center shadow-sm transition-colors"
                                   >
                                     ×
                                   </button>
@@ -1272,13 +1271,13 @@ export default function IngestPage() {
                         </div>
 
                         {/* Detailed Projects */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-gray-100 pb-1">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Projects (Max 3)</div>
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Projects (Max 3)</div>
                             {detailedMapping.projects.length < 3 && (
                               <button 
                                 onClick={() => setDetailedMapping(prev => ({ ...prev, projects: [...prev.projects, { name: "", description: "", technologies: "", role: "", start: "", end: "" }] }))}
-                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                                className="text-[11px] font-bold text-primary-500 hover:text-primary-600 uppercase tracking-widest"
                               >
                                 + Add project column set
                               </button>
@@ -1286,11 +1285,11 @@ export default function IngestPage() {
                           </div>
                           <div className="space-y-6">
                             {detailedMapping.projects.map((proj, idx) => (
-                              <div key={idx} className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 space-y-4 relative">
-                                <div className="text-[10px] font-bold text-gray-400 italic">Project {idx+1}</div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Project Name</div>
+                              <div key={idx} className="p-6 rounded-xl bg-neutral-50/50 border border-neutral-100 space-y-5 relative">
+                                <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider italic">Project {idx+1}</div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Project Name</div>
                                     <select
                                       value={proj.name}
                                       onChange={(e) => {
@@ -1298,14 +1297,14 @@ export default function IngestPage() {
                                         next[idx].name = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, projects: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Role in Project</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Role in Project</div>
                                     <select
                                       value={proj.role}
                                       onChange={(e) => {
@@ -1313,14 +1312,14 @@ export default function IngestPage() {
                                         next[idx].role = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, projects: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Technologies Used</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Technologies</div>
                                     <select
                                       value={proj.technologies}
                                       onChange={(e) => {
@@ -1328,14 +1327,14 @@ export default function IngestPage() {
                                         next[idx].technologies = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, projects: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
                                     </select>
                                   </label>
-                                  <label className="block space-y-1">
-                                    <div className="text-[10px] font-bold text-gray-500">Description</div>
+                                  <label className="block space-y-1.5">
+                                    <div className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Description</div>
                                     <select
                                       value={proj.description}
                                       onChange={(e) => {
@@ -1343,7 +1342,7 @@ export default function IngestPage() {
                                         next[idx].description = e.target.value;
                                         setDetailedMapping(prev => ({ ...prev, projects: next }));
                                       }}
-                                      className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs"
+                                      className="w-full rounded-lg border border-neutral-300 bg-white px-2.5 py-2 text-xs focus-ring"
                                     >
                                       <option value="">(select column)</option>
                                       {csvHeaders.map(h => <option key={h} value={h}>{h}</option>)}
@@ -1353,7 +1352,7 @@ export default function IngestPage() {
                                 {idx > 0 && (
                                   <button 
                                     onClick={() => setDetailedMapping(prev => ({ ...prev, projects: prev.projects.filter((_, i) => i !== idx) }))}
-                                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 flex items-center justify-center shadow-sm"
+                                    className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-white border border-neutral-200 text-neutral-400 hover:text-danger flex items-center justify-center shadow-sm transition-colors"
                                   >
                                     ×
                                   </button>
@@ -1364,20 +1363,20 @@ export default function IngestPage() {
                         </div>
 
                         {/* Detailed Misc */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                          <div className="space-y-4">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1">Availability</div>
-                            <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                          <div className="space-y-5">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-2">Availability</div>
+                            <div className="grid grid-cols-1 gap-5">
                               {[
                                 { key: "availabilityStatus", label: "Status" },
                                 { key: "employmentType", label: "Type" }
                               ].map((f) => (
                                 <label key={f.key} className="block space-y-1.5">
-                                  <div className="text-xs font-semibold text-gray-700">{f.label}</div>
+                                  <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
                                   <select
                                     value={(detailedMapping as any)[f.key]}
                                     onChange={(e) => setDetailedMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-ring transition-card"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
                                   >
                                     <option value="">(not provided)</option>
                                     {csvHeaders.map((h) => (
@@ -1388,20 +1387,20 @@ export default function IngestPage() {
                               ))}
                             </div>
                           </div>
-                          <div className="space-y-4">
-                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-1">Social Links</div>
-                            <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-5">
+                            <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-neutral-100 pb-2">Social Links</div>
+                            <div className="grid grid-cols-1 gap-5">
                               {[
                                 { key: "linkedin", label: "LinkedIn" },
                                 { key: "github", label: "GitHub" },
                                 { key: "portfolio", label: "Portfolio" }
                               ].map((f) => (
                                 <label key={f.key} className="block space-y-1.5">
-                                  <div className="text-xs font-semibold text-gray-700">{f.label}</div>
+                                  <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
                                   <select
                                     value={(detailedMapping as any)[f.key]}
                                     onChange={(e) => setDetailedMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
-                                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus-ring transition-card"
+                                    className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
                                   >
                                     <option value="">(not provided)</option>
                                     {csvHeaders.map((h) => (
@@ -1416,66 +1415,63 @@ export default function IngestPage() {
                       </div>
                     )}
 
-                    <div className="pt-6 flex flex-col sm:flex-row items-center gap-4 border-t border-gray-100">
+                    <div className="pt-8 flex flex-col sm:flex-row items-center gap-6 border-t border-neutral-100">
                       <button
                         type="button"
                         disabled={loadingB}
                         onClick={() => void handleCsvPreview()}
-                        className="w-full sm:w-auto rounded-xl px-10 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 transition-card font-bold focus-ring shadow-soft"
+                        className="w-full sm:w-auto px-10 py-3.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 disabled:bg-neutral-300 transition-all shadow-sm focus-ring"
                       >
                         {loadingB ? "Transforming..." : "Preview candidates"}
                       </button>
-                      <p className="text-[11px] text-gray-400 italic">Click preview to validate mappings before final ingestion.</p>
+                      <p className="text-[12px] text-neutral-400 italic">Validate mappings before final ingestion.</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {csvValidationErrors.length > 0 && (
-                <div className="space-y-2 p-4 rounded-xl bg-amber-50 border border-amber-100">
-                  <div className="text-xs font-bold text-amber-800 uppercase tracking-widest flex items-center gap-2">
+                <div className="p-4 rounded-lg bg-warningLight/50 text-warning border border-warning/20">
+                  <div className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     Mapping Warnings ({csvValidationErrors.length})
                   </div>
                   <ul className="list-disc list-inside space-y-1">
                     {csvValidationErrors.slice(0, 5).map((err, i) => (
-                      <li key={i} className="text-xs text-amber-700">{err}</li>
+                      <li key={i} className="text-xs">{err}</li>
                     ))}
-                    {csvValidationErrors.length > 5 && <li className="text-xs text-amber-700 italic">...and {csvValidationErrors.length - 5} more</li>}
+                    {csvValidationErrors.length > 5 && <li className="text-xs italic">...and {csvValidationErrors.length - 5} more</li>}
                   </ul>
-                  <p className="text-[10px] text-amber-600 mt-2 font-medium">Candidates with errors will be skipped. Others will be ingested with defaults.</p>
                 </div>
               )}
 
               {validatedCsvProfiles.length > 0 && (
-                <div className="space-y-6 animate-fade-in-up">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                      {validatedCsvProfiles.length} candidates transformed successfully
-                    </div>
+                <div className="space-y-8 animate-fade-in-up">
+                  <div className="text-[12px] font-semibold text-success bg-successLight px-3 py-1 rounded-full uppercase tracking-wider inline-block">
+                    {validatedCsvProfiles.length} candidates transformed successfully
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {validatedCsvProfiles.map((p, idx) => {
                       const hasNoProjects = p.projects.length === 0;
                       return (
-                        <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-white space-y-3 shadow-sm hover:shadow-soft transition-card relative">
+                        <div key={idx} className="p-5 rounded-xl border border-neutral-200 bg-white space-y-4 shadow-sm hover:shadow-card transition-card relative">
                           <div className="flex justify-between items-start">
-                            <div className="space-y-0.5 max-w-[70%]">
-                              <h3 className="text-sm font-bold text-gray-900 truncate">{p.firstName} {p.lastName}</h3>
-                              <p className="text-[11px] text-gray-500 font-medium truncate">{p.headline}</p>
+                            <div className="space-y-1 max-w-[70%]">
+                              <h3 className="text-[14px] font-semibold text-neutral-800 truncate">{p.firstName} {p.lastName}</h3>
+                              <p className="text-[13px] text-neutral-500 truncate">{p.headline}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ${
-                                p.availability.status === "Available" ? "bg-green-100 text-green-700 border-green-200" :
-                                p.availability.status === "Open to Opportunities" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                                "bg-gray-100 text-gray-500 border-gray-200"
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
+                                p.availability.status === "Available" ? "bg-successLight text-success border-success/20" :
+                                p.availability.status === "Open to Opportunities" ? "bg-warningLight text-warning border-warning/20" :
+                                "bg-neutral-100 text-neutral-500 border-neutral-200"
                               }`}>
                                 {p.availability.status}
                               </span>
                               {hasNoProjects && (
                                 <div className="tooltip-container">
-                                  <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <svg className="h-4 w-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                   </svg>
                                   <div className="tooltip-text">No projects detected. AI relevance scoring will be lower.</div>
@@ -1484,25 +1480,24 @@ export default function IngestPage() {
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3 text-[11px] text-gray-500">
-                            <div className="flex items-center gap-1 min-w-0">
-                              <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          <div className="flex items-center gap-3 text-[12px] text-neutral-400">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                               <span className="truncate">{p.location}</span>
                             </div>
-                            <div className="font-bold text-gray-300">|</div>
+                            <div className="h-3 w-[1px] bg-neutral-200" />
                             <div className="flex-shrink-0">{p.experience.length} roles</div>
-                            <div className="font-bold text-gray-300">|</div>
+                            <div className="h-3 w-[1px] bg-neutral-200" />
                             <div className="flex-shrink-0">{p.projects.length} projects</div>
                           </div>
 
                           <div className="flex flex-wrap gap-1.5 items-center">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.skills.length} skills:</span>
                             {p.skills.slice(0, 3).map((s, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-[10px] text-gray-600 font-medium">
+                              <span key={i} className="px-2 py-0.5 rounded bg-primary-50 text-[11px] text-primary-500 font-medium">
                                 {s.name}
                               </span>
                             ))}
-                            {p.skills.length > 3 && <span className="text-[10px] text-gray-400">+{p.skills.length - 3} more</span>}
+                            {p.skills.length > 3 && <span className="text-[11px] text-neutral-400">+{p.skills.length - 3} more</span>}
                           </div>
                         </div>
                       );
@@ -1515,7 +1510,7 @@ export default function IngestPage() {
                         type="button"
                         disabled={loadingB || validatedCsvProfiles.length === 0}
                         onClick={() => void submitCsvIngestion()}
-                        className="w-full sm:w-auto rounded-xl px-12 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 transition-all font-bold focus-ring shadow-soft flex items-center justify-center gap-3"
+                        className="px-12 py-4 bg-primary-500 text-white rounded-lg text-sm font-semibold hover:bg-primary-600 disabled:bg-neutral-300 transition-all shadow-sm active:scale-[0.98]"
                       >
                         {loadingB ? "Ingesting..." : `Ingest ${validatedCsvProfiles.length} candidates`}
                       </button>
@@ -1525,18 +1520,18 @@ export default function IngestPage() {
               )}
 
               {ingestResultB && (
-                <div className="p-5 rounded-xl bg-green-50 border border-green-100 space-y-4 animate-fade-in-up shadow-sm">
-                  <div className="flex items-center gap-3 text-green-800">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <div className="p-6 rounded-xl bg-successLight border border-success/20 space-y-4 animate-fade-in-up shadow-sm">
+                  <div className="flex items-center gap-3 text-success">
+                    <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
                       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-sm font-bold">Successfully ingested {validatedCsvProfiles.length} candidates from CSV.</span>
+                    <span className="text-sm font-semibold">Successfully ingested {validatedCsvProfiles.length} candidates from CSV.</span>
                   </div>
                   <button
                     onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
-                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-[#1F2A37] px-5 py-2.5 rounded-lg hover:bg-[#152030] transition-colors shadow-sm focus-ring"
+                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-neutral-800 px-6 py-3 rounded-lg hover:bg-neutral-900 transition-colors shadow-sm focus-ring"
                   >
                     Go to screening
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
@@ -1545,24 +1540,24 @@ export default function IngestPage() {
               )}
 
               {ingestErrorB && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-sm font-bold text-red-600">
+                <div className="p-4 rounded-lg bg-dangerLight text-danger text-sm font-semibold border border-danger/20">
                   {ingestErrorB}
                 </div>
               )}
 
-              <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6">
+              <div className="rounded-xl border border-neutral-200 bg-white p-6 sm:p-8 space-y-8 shadow-sm">
                 <div className="space-y-1">
-                  <div className="text-sm font-medium text-gray-900">3) Upload resume PDF (optional)</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm font-semibold text-neutral-800">3) Upload resume PDF (optional)</div>
+                  <div className="text-xs text-neutral-400">
                     Attach a PDF to an existing applicant for detailed AI parsing.
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                  <label className="block space-y-2">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Target applicant</div>
+                <div className="grid grid-cols-1 gap-8">
+                  <label className="block space-y-1.5">
+                    <div className="text-[13px] font-medium text-neutral-700">Target applicant</div>
                     <select
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus-ring transition-card"
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
                       value={selectedApplicantId}
                       onChange={(e) => setSelectedApplicantId(e.target.value)}
                     >
@@ -1574,7 +1569,7 @@ export default function IngestPage() {
                   </label>
 
                   <div
-                    className={`rounded-2xl border-2 border-dashed transition-card p-10 text-center cursor-pointer min-h-[140px] flex items-center justify-center ${pdfFile ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100"}`}
+                    className={`rounded-xl border-2 border-dashed transition-card p-12 text-center cursor-pointer min-h-[160px] flex items-center justify-center ${pdfFile ? "border-primary-500 bg-primary-50" : "border-neutral-300 bg-white hover:border-primary-500 hover:bg-primary-50"}`}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -1593,26 +1588,26 @@ export default function IngestPage() {
                         if (f) setPdfFile(f);
                       }}
                     />
-                    <div className="text-sm font-medium text-gray-700">
+                    <div className="text-sm font-medium text-neutral-700">
                       {pdfFile ? (
-                        <span>Selected: <span className="text-blue-700 font-bold">{pdfFile.name}</span></span>
+                        <span>Selected: <span className="text-primary-500 font-bold">{pdfFile.name}</span></span>
                       ) : (
-                        <span>Drop resume PDF here or <span className="text-blue-600 underline text-sm">browse</span></span>
+                        <span>Drop resume PDF here or <span className="text-primary-500 underline">browse</span></span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 pt-2">
                   <button
                     type="button"
                     disabled={!pdfFile || !selectedApplicantId}
                     onClick={() => void submitResumeUpload()}
-                    className="rounded-xl px-8 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 transition-card font-medium"
+                    className="px-8 py-3.5 bg-neutral-800 text-white rounded-lg text-sm font-medium hover:bg-neutral-900 disabled:bg-neutral-300 transition-all shadow-sm"
                   >
                     Upload and parse PDF
                   </button>
-                  {uploadStatus ? <div className="text-xs font-semibold text-blue-700 sm:px-2">{uploadStatus}</div> : null}
+                  {uploadStatus ? <div className="text-xs font-semibold text-primary-600 italic">{uploadStatus}</div> : null}
                 </div>
               </div>
             </div>

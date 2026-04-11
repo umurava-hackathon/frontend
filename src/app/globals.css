@@ -2,19 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
-}
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-700 font-sans antialiased;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  background: #F7F8FA;
-  color: #111827;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  h1 { @apply text-2xl font-semibold text-neutral-800; }
+  h2 { @apply text-xl font-semibold text-neutral-800; }
+  h3 { @apply text-base font-medium text-neutral-800; }
 }
 
 @layer utilities {
   .shadow-soft {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/20 focus-visible:border-primary-500;
   }
 }
 
@@ -33,7 +43,7 @@ body {
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
@@ -48,49 +58,48 @@ body {
 }
 
 .transition-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.15s ease, background-color 0.15s ease;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out;
 }
 
 .card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.focus-ring:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+  @apply -translate-y-[1px] shadow-card;
 }
 
 /* Typography Hierarchy */
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #111;
+  @apply text-2xl font-semibold text-neutral-800;
 }
 
 .section-label {
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #6b7280;
+  @apply text-[13px] font-medium uppercase tracking-[0.06em] text-neutral-500;
 }
 
 .candidate-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: #111;
+  @apply text-[17px] font-semibold text-neutral-800;
 }
 
 .candidate-headline {
-  font-size: 13px;
-  color: #6b7280;
+  @apply text-[13px] text-neutral-500;
 }
 
 .ai-reasoning {
-  font-size: 14px;
-  line-height: 1.7;
-  color: #374151;
+  @apply text-sm leading-[1.7] text-neutral-700;
+}
+
+/* Tooltip simple implementation */
+.tooltip-container {
+  position: relative;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 240px;
+  @apply bg-neutral-800 text-white text-center rounded-md p-2 absolute z-[100] bottom-[125%] left-1/2 -ml-[120px] opacity-0 transition-opacity duration-200 text-xs pointer-events-none shadow-dropdown;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* Grid animation for expansion */
@@ -106,33 +115,4 @@ body {
 
 .expandable-content {
   overflow: hidden;
-}
-
-/* Tooltip simple implementation */
-.tooltip-container {
-  position: relative;
-}
-
-.tooltip-text {
-  visibility: hidden;
-  width: 240px;
-  background-color: #1f2937;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 8px;
-  position: absolute;
-  z-index: 100;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -120px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  font-size: 12px;
-  pointer-events: none;
-}
-
-.tooltip-container:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
 }

@@ -113,59 +113,59 @@ export default function JobCreatePage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <section className="space-y-6 animate-fade-in-up">
+      <section className="space-y-8 animate-fade-in-up">
         <div className="px-4 sm:px-0">
-          <h1 className="page-title">Create a job</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-neutral-800">Create a job</h1>
+          <p className="mt-1 text-[14px] text-neutral-500">
             Define must-have skills, experience and education requirements, and recruiter-adjustable scoring weights.
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="bg-white rounded-2xl sm:shadow-soft border-y sm:border border-gray-200 p-4 sm:p-8 space-y-8 transition-card">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <label className="block">
-              <div className="text-sm font-medium text-gray-900">Job title</div>
+        <form onSubmit={onSubmit} className="bg-white rounded-xl border border-neutral-200 p-6 sm:p-8 space-y-10 shadow-card transition-card">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <label className="block space-y-1.5">
+              <div className="text-[13px] font-medium text-neutral-700">Job title</div>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white focus-ring transition-card"
+                className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white placeholder:text-neutral-400 focus-ring transition-card"
                 placeholder="e.g., Backend Engineer"
                 required
               />
             </label>
-            <label className="block">
-              <div className="text-sm font-medium text-gray-900">Experience level (years)</div>
+            <label className="block space-y-1.5">
+              <div className="text-[13px] font-medium text-neutral-700">Experience level (years)</div>
               <input
                 type="number"
                 min={0}
                 value={experienceYears}
                 onChange={(e) => setExperienceYears(Number(e.target.value))}
-                className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white focus-ring transition-card"
+                className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white focus-ring transition-card"
                 required
               />
             </label>
           </div>
 
-          <label className="block">
-            <div className="text-sm font-medium text-gray-900">Job description</div>
+          <label className="block space-y-1.5">
+            <div className="text-[13px] font-medium text-neutral-700">Job description</div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white min-h-[140px] focus-ring transition-card"
+              className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white min-h-[140px] focus-ring transition-card"
               required
             />
           </label>
 
           <div className="space-y-4">
-            <div className="text-sm font-medium text-gray-900">Required skills (tags)</div>
+            <div className="text-[13px] font-medium text-neutral-700">Required skills (tags)</div>
             <div className="flex flex-wrap gap-2">
               {skills.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-2 rounded-full bg-gray-100 border border-gray-200 px-4 py-1.5 text-sm text-gray-800 transition-card hover:scale-[1.02]">
+                <span key={tag} className="inline-flex items-center gap-2 rounded-full bg-primary-50 border border-primary-200 px-3 py-1 text-[12px] font-medium text-primary-700 transition-card hover:scale-[1.02]">
                   {tag}
                   <button
                     type="button"
                     onClick={() => setSkills((prev) => prev.filter((x) => x !== tag))}
-                    className="text-gray-500 hover:text-gray-800 focus:outline-none"
+                    className="text-primary-400 hover:text-danger focus:outline-none"
                     aria-label={`Remove ${tag}`}
                   >
                     ×
@@ -183,33 +183,38 @@ export default function JobCreatePage() {
                     addSkillTag();
                   }
                 }}
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-3 bg-white focus-ring transition-card"
+                className="flex-1 rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white placeholder:text-neutral-400 focus-ring transition-card"
                 placeholder="Type a skill and press Enter"
               />
-              <button type="button" onClick={addSkillTag} className="rounded-xl px-6 py-3 bg-[#1F2A37] text-white hover:bg-[#152030] transition-card focus-ring">
+              <button 
+                type="button" 
+                onClick={addSkillTag} 
+                className="px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors"
+              >
                 Add skill
               </button>
             </div>
           </div>
 
-          <label className="block">
-            <div className="text-sm font-medium text-gray-900">Education requirement</div>
+          <label className="block space-y-1.5">
+            <div className="text-[13px] font-medium text-neutral-700">Education requirement</div>
             <input
               value={educationRequirement}
               onChange={(e) => setEducationRequirement(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 bg-white focus-ring transition-card"
+              className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white focus-ring transition-card"
               required
             />
           </label>
 
-          <div className="space-y-6 pt-4 border-t border-gray-100">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div className="space-y-8 pt-6 border-t border-neutral-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <div className="text-sm font-medium text-gray-900">Custom scoring weights</div>
-                <div className="text-xs text-gray-500 mt-1">Sliders always sum to 100. Adjust based on your priority.</div>
+                <div className="text-[13px] font-medium text-neutral-700 uppercase tracking-wider">Custom scoring weights</div>
+                <div className="text-[12px] text-neutral-500 mt-1">Adjust based on your priority. Sliders must sum to 100%.</div>
               </div>
-              <div className="text-sm text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">
-                Sum: <span className="font-bold">{sumWeights(weights)}%</span>
+              <div className={`px-3 py-1 rounded-full text-[12px] font-semibold flex items-center gap-1.5 ${sumWeights(weights) === 100 ? "bg-successLight text-success border border-success/20" : "bg-dangerLight text-danger border border-danger/20"}`}>
+                <span className="opacity-70">Sum:</span>
+                <span>{sumWeights(weights)}%</span>
               </div>
             </div>
 
@@ -224,10 +229,10 @@ export default function JobCreatePage() {
               ).map((w) => (
                 <div key={w.key} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">
-                      {w.label} <span className="text-xs font-normal text-gray-500">— {w.hint}</span>
+                    <div className="text-[13px] text-neutral-600">
+                      {w.label} <span className="text-[11px] text-neutral-400 font-normal ml-1">— {w.hint}</span>
                     </div>
-                    <div className="text-sm text-[#1F2A37] font-bold bg-blue-50 px-2 py-0.5 rounded-md">{weights[w.key]}%</div>
+                    <div className="text-[13px] text-primary-500 font-semibold">{weights[w.key]}%</div>
                   </div>
                   <input
                     type="range"
@@ -238,7 +243,7 @@ export default function JobCreatePage() {
                       const next = Number(e.target.value);
                       setWeights((cur) => adjustWeights(cur, w.key, next));
                     }}
-                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#1F2A37] focus-ring"
+                    className="w-full h-1 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-primary-500 focus-ring"
                   />
                 </div>
               ))}
@@ -246,20 +251,20 @@ export default function JobCreatePage() {
           </div>
 
           {jobCreate.error ? (
-            <div className="p-4 rounded-xl bg-red-50 text-sm text-red-600 border border-red-100 animate-pulse-slow">
+            <div className="p-4 rounded-lg bg-dangerLight text-sm text-danger border border-danger/20">
               {jobCreate.error}
             </div>
           ) : null}
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 pt-6">
             <button
               type="submit"
               disabled={!canSubmit || jobCreate.loading}
-              className="rounded-xl px-8 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 disabled:cursor-not-allowed transition-card focus-ring shadow-soft"
+              className="px-10 py-3.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-sm"
             >
               {jobCreate.loading ? "Creating..." : "Save job and continue"}
             </button>
-            <div className="text-xs text-gray-500 leading-relaxed max-w-xs sm:px-2">
+            <div className="text-[12px] text-neutral-400 italic leading-relaxed max-w-xs">
               Recruiter always keeps the final word. AI handles the heavy lifting, you handle the selection.
             </div>
           </div>

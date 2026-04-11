@@ -83,27 +83,27 @@ export default function ScreenJobPage() {
   return (
     <section className="space-y-8 animate-fade-in-up">
       <div className="px-4 sm:px-0">
-        <h1 className="page-title">Trigger screening</h1>
-        <p className="mt-1 text-sm text-gray-600 leading-relaxed">
+        <h1 className="text-2xl font-semibold text-neutral-800">Trigger screening</h1>
+        <p className="mt-1 text-sm text-neutral-500">
           Start AI screening for this job. Gemini will rank candidates based on your custom weights and the Umurava schema.
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl sm:shadow-soft border-y sm:border border-gray-200 p-4 sm:p-8 space-y-8">
+      <div className="bg-white rounded-xl border border-neutral-200 p-6 sm:p-10 space-y-10 shadow-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-1">
-            <div className="text-sm font-bold text-gray-900">Shortlist size</div>
-            <div className="text-xs text-gray-500">How many top matches do you want Gemini to prioritize?</div>
+            <div className="text-[15px] font-semibold text-neutral-800">Shortlist size</div>
+            <div className="text-[13px] text-neutral-400">How many top matches do you want Gemini to prioritize?</div>
           </div>
-          <div className="flex bg-gray-100 p-1 rounded-xl">
+          <div className="flex bg-neutral-100 p-1 rounded-lg">
             {[10, 20].map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => setTopN(n as 10 | 20)}
                 className={classNames(
-                  "px-6 py-2 rounded-lg text-sm font-bold transition-all focus-ring",
-                  topN === n ? "bg-white text-[#1F2A37] shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  "px-6 py-2 rounded-md text-xs font-bold transition-all focus-ring",
+                  topN === n ? "bg-white text-primary-500 shadow-sm" : "text-neutral-500 hover:text-neutral-700"
                 )}
               >
                 Top {n}
@@ -112,50 +112,50 @@ export default function ScreenJobPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 space-y-4">
+        <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-6 sm:p-8 space-y-6">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold uppercase tracking-widest text-gray-500">AI Engine Status</div>
-            <div className="text-xs font-bold text-[#1F2A37]">
+            <div className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">AI Engine Status</div>
+            <div className="text-[11px] font-bold text-neutral-700 uppercase tracking-widest bg-neutral-200/50 px-2 py-0.5 rounded">
               {results?.status ? `Last Run: ${results.status}` : "No runs found"}
             </div>
           </div>
 
-          <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden shadow-inner">
+          <div className="h-2 w-full bg-neutral-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 transition-all duration-500 ease-out"
+              className="h-full bg-primary-500 transition-all duration-500 ease-out rounded-full shadow-[0_0_8px_rgba(43,113,240,0.4)]"
               style={{ width: `${progress}%` }}
               aria-label="screening progress"
             />
           </div>
 
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            {loading && <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />}
+          <div className="flex items-center gap-3 text-[13px] font-medium text-neutral-600">
+            {loading && <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />}
             {loading ? statusText : !hasApplicants ? "No candidates found for this job." : "Ready to analyze candidates."}
           </div>
         </div>
 
         {!hasApplicants ? (
-          <div className="p-6 rounded-2xl bg-amber-50 border border-amber-100 space-y-4">
-            <div className="flex items-center gap-3 text-amber-800">
+          <div className="p-6 rounded-xl bg-warningLight border border-warning/20 space-y-4">
+            <div className="flex items-center gap-3 text-warning">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-sm font-bold">Incomplete data: Ingest candidates first</span>
+              <span className="text-sm font-semibold">Incomplete data: Ingest candidates first</span>
             </div>
             <button
               onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/ingest`)}
-              className="w-full sm:w-auto rounded-xl px-6 py-3 bg-[#1F2A37] text-white hover:bg-[#152030] transition-card shadow-sm font-medium focus-ring"
+              className="px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring"
             >
               Go to ingestion
             </button>
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
             <button
               type="button"
               disabled={!canStart}
               onClick={() => void startScreening()}
-              className="rounded-xl px-10 py-4 bg-[#1F2A37] text-white hover:bg-[#152030] disabled:opacity-50 disabled:cursor-not-allowed transition-card shadow-soft font-bold focus-ring"
+              className="px-10 py-3.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-sm font-bold focus-ring"
             >
               {loading ? "Screening..." : "Start AI analysis"}
             </button>
@@ -163,7 +163,7 @@ export default function ScreenJobPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/shortlist`)}
-                className="rounded-xl px-6 py-4 bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 transition-card shadow-sm font-bold focus-ring"
+                className="px-8 py-3.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm"
               >
                 View previous results
               </button>

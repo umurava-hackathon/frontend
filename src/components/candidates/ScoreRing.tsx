@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 
 function colorForScore(score: number) {
-  if (score >= 80) return "#16A34A"; // green
-  if (score >= 60) return "#F59E0B"; // amber
-  return "#EF4444"; // red
+  if (score >= 85) return "#16A34A"; // success
+  if (score >= 70) return "#2B71F0"; // primary
+  if (score >= 50) return "#D97706"; // warning
+  return "#DC2626"; // danger
 }
 
 export function ScoreRing({ score, size = 44 }: { score: number; size?: number }) {
@@ -28,7 +29,7 @@ export function ScoreRing({ score, size = 44 }: { score: number; size?: number }
   return (
     <div className="relative flex items-center justify-center transition-card" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#F3F4F6" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -45,12 +46,12 @@ export function ScoreRing({ score, size = 44 }: { score: number; size?: number }
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center leading-none">
-        <span className="text-[11px] font-bold text-gray-900">{Math.round(pct)}</span>
-        <span className="text-[7px] uppercase font-bold text-gray-400 mt-0.5">Score</span>
+        <span className="text-[11px] font-bold" style={{ color }}>{Math.round(pct)}</span>
+        <span className="text-[7px] uppercase font-bold text-neutral-400 mt-0.5">Match</span>
       </div>
       
       {pct >= 90 && (
-        <div className="absolute inset-0 rounded-full animate-pulse ring-4 ring-green-500/10" style={{ animationIterationCount: 1, animationDuration: '600ms' }} />
+        <div className="absolute inset-0 rounded-full animate-pulse ring-4 ring-success/10" style={{ animationIterationCount: 1, animationDuration: '600ms' }} />
       )}
     </div>
   );

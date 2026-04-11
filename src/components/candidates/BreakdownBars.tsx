@@ -7,9 +7,9 @@ function classNames(...xs: Array<string | false | undefined>) {
 }
 
 function colorForScore(score: number) {
-  if (score >= 80) return "bg-blue-500";
-  if (score >= 60) return "bg-amber-500";
-  return "bg-red-500";
+  if (score >= 85) return "bg-success";
+  if (score >= 70) return "bg-primary-500";
+  return "bg-warning";
 }
 
 export function BreakdownBars({ breakdown }: { breakdown: Record<string, number> }) {
@@ -36,13 +36,13 @@ export function BreakdownBars({ breakdown }: { breakdown: Record<string, number>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
       {(Object.entries(widths) as Array<[string, number]>).map(([key, val], idx) => (
         <div key={key} className="space-y-1.5">
-          <div className="flex justify-between items-center">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 min-w-[80px]">
+          <div className="flex justify-between items-center px-0.5">
+            <div className="text-[12px] font-normal capitalize text-neutral-500 min-w-[80px]">
               {key}
             </div>
-            <div className="text-[11px] font-bold text-gray-900">{breakdown[key] ?? 0}%</div>
+            <div className="text-[12px] font-semibold text-neutral-800">{breakdown[key] ?? 0}%</div>
           </div>
-          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
             <div
               className={classNames(
                 "h-full rounded-full transition-all duration-600 ease-out",
