@@ -85,3 +85,11 @@ export async function apiGetJobApplicants(jobId: string): Promise<any> {
   return request(`/jobs/${encodeURIComponent(jobId)}/applicants`, { method: "GET" });
 }
 
+export async function apiGetJob(jobId: string): Promise<{ data: any }> {
+  return request(`/jobs/${encodeURIComponent(jobId)}`, { method: "GET" });
+}
+
+export async function apiUpdateJob(jobId: string, payload: any): Promise<{ data: { id: string; updatedAt: string } }> {
+  return request(`/jobs/${encodeURIComponent(jobId)}`, { method: "PUT", body: JSON.stringify(payload) });
+}
+

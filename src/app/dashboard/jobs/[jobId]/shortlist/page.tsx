@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { thunkFetchResults } from "@/store/slices/dashboardSlice";
+import { thunkFetchJob, thunkFetchResults } from "@/store/slices/dashboardSlice";
 import { ScoreRing } from "@/components/candidates/ScoreRing";
 import { GreenPill, AmberPill } from "@/components/candidates/Pills";
 import { RecommendationBadge } from "@/components/candidates/RecommendationBadge";
@@ -15,17 +16,17 @@ function classNames(...xs: Array<string | false | undefined>) {
 }
 
 const ShimmerCard = () => (
-  <div className="rounded-2xl border border-gray-100 p-6 bg-white space-y-4">
+  <div className="rounded-2xl border border-neutral-100 p-6 bg-white space-y-4">
     <div className="flex items-center gap-4">
-      <div className="h-10 w-10 rounded-full animate-shimmer bg-gray-100" />
+      <div className="h-10 w-10 rounded-full animate-shimmer bg-neutral-100" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-1/3 animate-shimmer bg-gray-100 rounded" />
-        <div className="h-3 w-1/2 animate-shimmer bg-gray-100 rounded" />
+        <div className="h-4 w-1/3 animate-shimmer bg-neutral-100 rounded" />
+        <div className="h-3 w-1/2 animate-shimmer bg-neutral-100 rounded" />
       </div>
     </div>
     <div className="grid grid-cols-2 gap-4">
-      <div className="h-20 animate-shimmer bg-gray-100 rounded-xl" />
-      <div className="h-20 animate-shimmer bg-gray-100 rounded-xl" />
+      <div className="h-20 animate-shimmer bg-neutral-100 rounded-xl" />
+      <div className="h-20 animate-shimmer bg-neutral-100 rounded-xl" />
     </div>
   </div>
 );
@@ -40,11 +41,38 @@ export default function ShortlistPage() {
   const screeningError = useAppSelector((s) => s.dashboard.screening.error);
 
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(null);
+  const [pollTick, setPollTick] = useState(0);
+  const [fakeProgress, setFakeProgress] = useState(0);
+  const currentJob = useAppSelector((s) => s.dashboard.currentJob);
+
+  const isPolling = results?.status === "queued" || results?.status === "running";
 
   useEffect(() => {
     if (!jobId) return;
     void dispatch(thunkFetchResults(jobId) as any);
-  }, [jobId, dispatch]);
+    void dispatch(thunkFetchJob(jobId) as any);
+  }, [jobId, dispatch, pollTick]);
+
+  // Re-poll every 3 s while screening is in-flight
+  useEffect(() => {
+    if (!isPolling) return;
+    const t = setTimeout(() => setPollTick((n) => n + 1), 3000);
+    return () => clearTimeout(t);
+  }, [isPolling, pollTick]);
+
+  // Animate fake progress bar while polling
+  useEffect(() => {
+    if (isPolling) {
+      setFakeProgress((p) => Math.max(15, p));
+      const t = setInterval(
+        () => setFakeProgress((p) => Math.min(80, p + Math.random() * 3 + 0.5)),
+        900
+      );
+      return () => clearInterval(t);
+    }
+    if (results?.status === "succeeded" || results?.status === "partial") setFakeProgress(100);
+    if (results?.status === "failed") setFakeProgress(100);
+  }, [isPolling, results?.status]);
 
   const shortlist = results?.shortlist ?? [];
 
@@ -60,8 +88,8 @@ export default function ShortlistPage() {
     return (
       <section className="space-y-6 animate-fade-in-up">
         <div className="space-y-2 px-4 sm:px-0 text-center sm:text-left">
-          <div className="h-8 w-48 bg-gray-200 animate-shimmer rounded-lg mx-auto sm:mx-0" />
-          <div className="h-4 w-64 bg-gray-100 animate-shimmer rounded mx-auto sm:mx-0" />
+          <div className="h-8 w-48 bg-neutral-200 animate-shimmer rounded-lg mx-auto sm:mx-0" />
+          <div className="h-4 w-64 bg-neutral-100 animate-shimmer rounded mx-auto sm:mx-0" />
         </div>
         <div className="grid grid-cols-1 gap-4">
           <ShimmerCard />
@@ -98,13 +126,29 @@ export default function ShortlistPage() {
             Ranked candidates with transparent strengths, gaps and AI bias awareness.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 no-print">
+          <Link
+            href={`/dashboard/jobs/${encodeURIComponent(jobId)}/edit`}
+            className="w-full sm:w-auto px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring text-center"
+          >
+            Edit job
+          </Link>
           <button
             type="button"
             onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/compare`)}
             className="w-full sm:w-auto px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring"
           >
             Compare mode
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="w-full sm:w-auto px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring inline-flex items-center justify-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print report
           </button>
           <button
             type="button"
@@ -116,18 +160,53 @@ export default function ShortlistPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-neutral-200 p-5 mx-4 sm:mx-0 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-neutral-500 font-medium">Run status:</span>
-            <span className="px-3 py-1 bg-successLight text-success border border-success/20 rounded-full text-[11px] font-bold uppercase tracking-widest">
-              {results?.status ?? "unknown"}
-            </span>
+      <div className="bg-white rounded-xl border border-neutral-200 p-5 mx-4 sm:mx-0 shadow-sm no-print">
+        {isPolling ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-primary-600">
+                <span className="h-2 w-2 rounded-full bg-primary-500 animate-pulse" />
+                AI screening in progress…
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded">
+                {results?.status}
+              </span>
+            </div>
+            <div className="h-2 w-full bg-neutral-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary-500 rounded-full transition-all duration-700 ease-out shadow-[0_0_6px_rgba(43,113,240,0.35)]"
+                style={{ width: `${fakeProgress}%` }}
+              />
+            </div>
+            <div className="flex gap-6 text-[11px] font-bold uppercase tracking-widest select-none">
+              {[
+                { label: "Queued",    active: results?.status === "queued" },
+                { label: "Analyzing", active: results?.status === "running" && fakeProgress < 55 },
+                { label: "Ranking",   active: results?.status === "running" && fakeProgress >= 55 },
+                { label: "Complete",  active: false },
+              ].map((s, i) => (
+                <span key={i} className={s.active ? "text-primary-500" : "text-neutral-300"}>{s.label}</span>
+              ))}
+            </div>
           </div>
-          <div className="text-[13px] font-medium text-neutral-500">
-            Showing Top <span className="text-neutral-800 font-bold">{results?.topN ?? "?"}</span> candidates.
+        ) : (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-neutral-500 font-medium">Run status:</span>
+              <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest border ${
+                results?.status === "succeeded" ? "bg-successLight text-success border-success/20" :
+                results?.status === "partial"   ? "bg-warningLight text-warning border-warning/20" :
+                results?.status === "failed"    ? "bg-dangerLight text-danger border-danger/20" :
+                "bg-neutral-100 text-neutral-500 border-neutral-200"
+              }`}>
+                {results?.status ?? "unknown"}
+              </span>
+            </div>
+            <div className="text-[13px] font-medium text-neutral-500">
+              Showing Top <span className="text-neutral-800 font-bold">{results?.topN ?? "?"}</span> candidates.
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 px-4 sm:px-0">
@@ -250,6 +329,93 @@ export default function ShortlistPage() {
           })
         )}
       </div>
+      {/* ── Print-only report ───────────────────────────────────── */}
+      {candidateCards.length > 0 && (
+        <div className="print-only space-y-6 text-neutral-900">
+          <div className="pb-5 border-b-2 border-neutral-800">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Umurava AI Screening Report</div>
+            <h1 className="text-2xl font-bold">
+              {currentJob?.id === jobId ? currentJob.title : "Screening Report"}
+            </h1>
+            <div className="mt-3 grid grid-cols-2 gap-x-12 gap-y-1 text-sm text-neutral-600">
+              <div>Date: <span className="font-semibold">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span></div>
+              <div>Status: <span className="font-semibold capitalize">{results?.status}</span></div>
+              <div>Job ID: <span className="font-mono text-xs">{jobId}</span></div>
+              <div>Shortlist: <span className="font-semibold">Top {results?.topN}</span></div>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            {candidateCards.map((c: any) => (
+              <div key={c.applicantId} className="border border-neutral-300 rounded-lg p-5 break-inside-avoid">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-base font-bold text-neutral-400">#{c.rank}</span>
+                      <span className="text-lg font-bold">{c.candidateName ?? `Candidate ${c.applicantId.slice(-4)}`}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                        c.recommendation === "SHORTLIST" ? "bg-successLight text-success border-success/30" :
+                        c.recommendation === "CONSIDER"  ? "bg-warningLight text-warning border-warning/30" :
+                        "bg-dangerLight text-danger border-danger/30"
+                      }`}>{c.recommendation}</span>
+                    </div>
+                    {c.candidateHeadline && (
+                      <div className="text-sm text-neutral-500 mt-0.5">{c.candidateHeadline}</div>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0 ml-4">
+                    <div className="text-3xl font-bold">{c.matchScore}<span className="text-base font-normal">%</span></div>
+                    <div className="text-[10px] uppercase tracking-widest text-neutral-400">match score</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-4 gap-2 py-3 border-y border-neutral-100 text-center text-sm">
+                  {(["skills", "experience", "education", "relevance"] as const).map((key) => (
+                    <div key={key}>
+                      <div className="text-base font-bold">{c.scoreBreakdown?.[key] ?? 0}</div>
+                      <div className="text-[10px] uppercase tracking-widest text-neutral-400">{key}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                  {(c.strengths ?? []).length > 0 && (
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Strengths</div>
+                      <ul className="space-y-0.5 text-neutral-700">
+                        {(c.strengths ?? []).map((s: string, i: number) => (
+                          <li key={i} className="flex gap-1.5"><span className="text-success">✓</span>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {(c.gaps ?? []).length > 0 && (
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">Key Gaps</div>
+                      <ul className="space-y-0.5 text-neutral-700">
+                        {(c.gaps ?? []).map((g: string, i: number) => (
+                          <li key={i} className="flex gap-1.5"><span className="text-warning">⚠</span>{g}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {c.reasoning && (
+                  <div className="mt-3">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">AI Reasoning</div>
+                    <p className="text-sm text-neutral-600 leading-relaxed">{c.reasoning}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4 border-t border-neutral-200 text-center text-[10px] text-neutral-400">
+            Umurava AI Screening Platform &middot; Generated {new Date().toISOString().replace("T", " ").slice(0, 19)} UTC
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiCreateJob, apiGetJobApplicants, apiGetJobResults, apiIngestCsv, apiIngestUmuravaProfiles, apiListJobs, apiTriggerScreening, apiUploadResume } from "../../lib/api";
+import { apiCreateJob, apiGetJob, apiGetJobApplicants, apiGetJobResults, apiIngestCsv, apiIngestUmuravaProfiles, apiListJobs, apiTriggerScreening, apiUpdateJob, apiUploadResume } from "../../lib/api";
 
 export type JobCreateState = {
   loading: boolean;
@@ -23,10 +23,18 @@ export type CandidatesResult = {
   shortlist: Array<any>;
 };
 
+export type JobUpdateState = {
+  loading: boolean;
+  error?: string;
+  success: boolean;
+};
+
 export type DashboardState = {
-  jobList: Array<{ id: string; title: string; status: string; createdAt: string }>;
+  jobList: Array<{ id: string; title: string; status: string; createdAt?: string }>;
   selectedJobId?: string;
+  currentJob?: any;
   jobCreate: JobCreateState;
+  jobUpdate: JobUpdateState;
   screening: ScreeningState;
   results?: CandidatesResult;
   applicants?: any[];
@@ -36,7 +44,9 @@ export type DashboardState = {
 const initialState: DashboardState = {
   jobList: [],
   selectedJobId: undefined,
+  currentJob: undefined,
   jobCreate: { loading: false, error: undefined, createdJobId: undefined },
+  jobUpdate: { loading: false, error: undefined, success: false },
   screening: { triggering: false, error: undefined, lastScreeningResult: undefined },
   results: undefined,
   applicants: undefined,
@@ -85,6 +95,17 @@ export const thunkFetchApplicants = createAsyncThunk("dashboard/fetchApplicants"
   return (await apiGetJobApplicants(jobId)).data as any[];
 });
 
+export const thunkFetchJob = createAsyncThunk("dashboard/fetchJob", async (jobId: string) => {
+  return (await apiGetJob(jobId)).data;
+});
+
+export const thunkUpdateJob = createAsyncThunk(
+  "dashboard/updateJob",
+  async (args: { jobId: string; payload: any }) => {
+    return (await apiUpdateJob(args.jobId, args.payload)).data;
+  }
+);
+
 const slice = createSlice({
   name: "dashboard",
   initialState,
@@ -95,6 +116,9 @@ const slice = createSlice({
     clearResults(state) {
       state.results = undefined;
       state.screening.lastScreeningResult = undefined;
+    },
+    resetJobUpdate(state) {
+      state.jobUpdate = { loading: false, error: undefined, success: false };
     }
   },
   extraReducers: (builder) => {
@@ -136,10 +160,22 @@ const slice = createSlice({
       .addCase(thunkTriggerScreening.rejected, (state, action) => {
         state.screening.triggering = false;
         state.screening.error = action.error.message;
+      })
+      .addCase(thunkFetchJob.fulfilled, (state, action) => {
+        state.currentJob = action.payload;
+      })
+      .addCase(thunkUpdateJob.pending, (state) => {
+        state.jobUpdate = { loading: true, error: undefined, success: false };
+      })
+      .addCase(thunkUpdateJob.fulfilled, (state) => {
+        state.jobUpdate = { loading: false, error: undefined, success: true };
+      })
+      .addCase(thunkUpdateJob.rejected, (state, action) => {
+        state.jobUpdate = { loading: false, error: action.error.message, success: false };
       });
   }
 });
 
-export const { selectJob, clearResults } = slice.actions;
+export const { selectJob, clearResults, resetJobUpdate } = slice.actions;
 export default slice.reducer;
 
