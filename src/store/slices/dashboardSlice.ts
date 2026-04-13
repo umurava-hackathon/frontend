@@ -21,6 +21,7 @@ export type CandidatesResult = {
   status: string;
   topN: number;
   shortlist: Array<any>;
+  errors?: Array<{ stage: string; code: string; message: string }>;
 };
 
 export type DashboardState = {
