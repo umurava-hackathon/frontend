@@ -5,7 +5,7 @@ on:
     branches: ["**"]
   delete:
     branches: ["**"]
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   mirror:
@@ -21,10 +21,35 @@ jobs:
           TARGET_URL: ${{ secrets.MIRROR_TARGET_URL }}
           TARGET_TOKEN: ${{ secrets.MIRROR_TARGET_PAT }}
         run: |
-          # Extract the URL part after https://
-          REPO_PATH=$(echo $TARGET_URL | sed 's/https:\/\/github.com\///')
-          # Build authenticated URL
-          AUTH_URL="https://x-access-token:${TARGET_TOKEN}@github.com/${REPO_PATH}"
+          echo "===== DEBUG START ====="
           
+          # Check if variables exist
+          if [ -z "$TARGET_URL" ]; then
+            echo "❌ TARGET_URL is EMPTY"
+          else
+            echo "✅ TARGET_URL is set"
+          fi
+
+          if [ -z "$TARGET_TOKEN" ]; then
+            echo "❌ TARGET_TOKEN is EMPTY"
+          else
+            echo "✅ TARGET_TOKEN is set"
+            echo "🔐 TOKEN length: ${#TARGET_TOKEN}"
+          fi
+
+          # Print raw URL (safe)
+          echo "🌐 Raw TARGET_URL: $TARGET_URL"
+
+          # Extract repo path
+          REPO_PATH=$(echo $TARGET_URL | sed 's/https:\/\/github.com\///')
+          echo "📦 Extracted REPO_PATH: $REPO_PATH"
+
+          # Build authenticated URL (mask token)
+          AUTH_URL="https://x-access-token:${TARGET_TOKEN}@github.com/${REPO_PATH}"
+          SAFE_AUTH_URL=$(echo "$AUTH_URL" | sed 's/x-access-token:.*/x-access-token:***@github.com\/.../')
+          echo "🔗 AUTH_URL (masked): $SAFE_AUTH_URL"
+
+          echo "===== DEBUG END ====="
+
           # Mirror all branches and tags
           git push --mirror "$AUTH_URL"
