@@ -1,3 +1,13 @@
 node_modules/
 .env.local
 .next/
+package-lock.json
+yarn.lock
+dist/
+build/
+coverage/
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.tsbuildinfo

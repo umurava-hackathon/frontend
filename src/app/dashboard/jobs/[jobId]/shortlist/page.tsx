@@ -157,9 +157,6 @@ export default function ShortlistPage() {
           </button>
           <button
             type="button"
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
             onClick={() => window.open(`/dashboard/jobs/${encodeURIComponent(jobId)}/report`, "_blank")}
             className="w-full sm:w-auto px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring inline-flex items-center justify-center gap-2"
           >
@@ -170,8 +167,6 @@ export default function ShortlistPage() {
           </button>
           <button
             type="button"
->>>>>>> Stashed changes
-=======
             onClick={() => window.print()}
             className="w-full sm:w-auto px-6 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors shadow-sm focus-ring inline-flex items-center justify-center gap-2"
           >
@@ -182,7 +177,6 @@ export default function ShortlistPage() {
           </button>
           <button
             type="button"
->>>>>>> frontend/npk
             onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
             className="w-full sm:w-auto px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors shadow-sm focus-ring"
           >

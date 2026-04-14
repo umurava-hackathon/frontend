@@ -1,0 +1,30 @@
+name: Mirror to Personal Repo
+
+on:
+  push:
+    branches: ["**"]
+  delete:
+    branches: ["**"]
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Personal Repo
+        env:
+          TARGET_URL: ${{ secrets.MIRROR_TARGET_URL }}
+          TARGET_TOKEN: ${{ secrets.MIRROR_TARGET_PAT }}
+        run: |
+          # Extract the URL part after https://
+          REPO_PATH=$(echo $TARGET_URL | sed 's/https:\/\/github.com\///')
+          # Build authenticated URL
+          AUTH_URL="https://x-access-token:${TARGET_TOKEN}@github.com/${REPO_PATH}"
+          
+          # Mirror all branches and tags
+          git push --mirror "$AUTH_URL"
