@@ -861,31 +861,31 @@ export default function IngestPage() {
               {csvFile && (
                 <div className="space-y-6 animate-fade-in-up">
                   <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-900">What does your CSV look like?</div>
+                    <div className="text-sm font-medium text-neutral-800">What does your CSV look like?</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div 
                         onClick={() => setCsvFormat("simple")}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 ${csvFormat === "simple" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"}`}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 ${csvFormat === "simple" ? "border-primary-500 bg-primary-50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300"}`}
                       >
                         <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${csvFormat === "simple" ? "border-blue-500" : "border-gray-300"}`}>
-                            {csvFormat === "simple" && <div className="h-2 w-2 rounded-full bg-blue-500" />}
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${csvFormat === "simple" ? "border-primary-500" : "border-neutral-300"}`}>
+                            {csvFormat === "simple" && <div className="h-2 w-2 rounded-full bg-primary-500" />}
                           </div>
-                          <span className="text-sm font-bold text-gray-900">Simple format</span>
+                          <span className="text-sm font-bold text-neutral-800">Simple format</span>
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">One row per candidate. Skills and experience stored as comma-separated values in single cells.</p>
+                        <p className="text-xs text-neutral-500 leading-relaxed">One row per candidate. Skills and experience stored as comma-separated values in single cells.</p>
                       </div>
                       <div 
                         onClick={() => setCsvFormat("detailed")}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 ${csvFormat === "detailed" ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-100 bg-white hover:border-gray-200"}`}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all space-y-2 ${csvFormat === "detailed" ? "border-primary-500 bg-primary-50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300"}`}
                       >
                         <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${csvFormat === "detailed" ? "border-blue-500" : "border-gray-300"}`}>
-                            {csvFormat === "detailed" && <div className="h-2 w-2 rounded-full bg-blue-500" />}
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${csvFormat === "detailed" ? "border-primary-500" : "border-neutral-300"}`}>
+                            {csvFormat === "detailed" && <div className="h-2 w-2 rounded-full bg-primary-500" />}
                           </div>
-                          <span className="text-sm font-bold text-gray-900">Detailed format</span>
+                          <span className="text-sm font-bold text-neutral-800">Detailed format</span>
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">Expanded columns. Separate columns for each skill, work role, and project (e.g., skill_1, skill_2).</p>
+                        <p className="text-xs text-neutral-500 leading-relaxed">Expanded columns. Separate columns for each skill, work role, and project (e.g., skill_1, skill_2).</p>
                       </div>
                     </div>
                   </div>
