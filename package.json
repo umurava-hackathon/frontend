@@ -12,11 +12,14 @@
   "dependencies": {
     "@react-pdf/renderer": "^4.4.1",
     "@reduxjs/toolkit": "^2.2.5",
+    "axios": "^1.15.1",
+    "date-fns": "^4.1.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.1.2",
-    "tailwindcss": "^3.4.10"
+    "tailwindcss": "^3.4.10",
+    "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",

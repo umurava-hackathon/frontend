@@ -1,83 +1,187 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkListJobs } from "@/store/slices/dashboardSlice";
+import { formatDistanceToNow } from "date-fns";
+
+function classNames(...xs: Array<string | false | undefined>) {
+  return xs.filter(Boolean).join(" ");
+}
 
 export default function JobsListPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { jobList, loading } = useAppSelector((s) => ({
-    jobList: s.dashboard.jobList,
-    loading: s.dashboard.jobCreate.loading // reuse loading state or check slice
-  }));
+  const jobList = useAppSelector((s) => s.dashboard.jobList);
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     void dispatch(thunkListJobs() as any);
   }, [dispatch]);
 
+  const filteredJobs = useMemo(() => {
+    return jobList.filter(job => {
+      const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || job.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [jobList, searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredJobs.slice(start, start + itemsPerPage);
+  }, [filteredJobs, currentPage]);
+
+  const getRelativeTime = (date: string | undefined) => {
+    if (!date) return "Unknown";
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  };
+
   return (
-    <section className="space-y-8 animate-fade-in-up">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 sm:px-0">
-        <div>
-          <h1 className="text-2xl font-semibold text-neutral-800">Jobs dashboard</h1>
-          <p className="mt-1 text-sm text-neutral-500">Manage your active screenings and candidate pipelines.</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold text-[#0F1621]">Jobs</h1>
+          <p className="text-sm text-[#5A6474]">Manage your active and draft recruitment campaigns.</p>
         </div>
         <button
           onClick={() => router.push("/dashboard/job-create")}
-          className="w-full sm:w-auto px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors shadow-sm focus-ring"
+          className="w-full sm:w-auto px-6 py-2.5 bg-[#2B71F0] text-white rounded-lg text-sm font-bold hover:bg-[#1A5CE0] transition-all shadow-sm active:scale-[0.98]"
         >
           Create new job
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-4 sm:px-0">
-        {jobList.length === 0 ? (
-          <div className="bg-white rounded-xl border border-neutral-200 p-10 sm:p-16 md:p-20 text-center shadow-sm space-y-8">
-            <div className="h-20 w-20 bg-neutral-50 rounded-full flex items-center justify-center mx-auto text-neutral-300">
-              <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div className="max-w-xs mx-auto space-y-2">
-              <h3 className="text-lg font-medium text-neutral-800">No jobs created yet</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">Create your first job requirement to start screening candidates with Umurava AI.</p>
-            </div>
-            <button
-              onClick={() => router.push("/dashboard/job-create")}
-              className="px-8 py-3 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors shadow-sm focus-ring"
-            >
-              Get started
-            </button>
-          </div>
-        ) : (
-          jobList.map((job) => (
-            <div
-              key={job.id}
+      <div className="bg-white border border-[#E8EAED] rounded-xl shadow-sm overflow-hidden flex flex-col">
+        {/* Filters */}
+        <div className="p-5 border-b border-[#E8EAED] flex flex-col sm:flex-row gap-4 bg-[#F8F9FC]">
+           <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9BA5B4]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input 
+                type="text" 
+                placeholder="Search jobs by title..." 
+                value={searchTerm}
+                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full pl-10 pr-4 py-2 bg-white border border-[#E8EAED] rounded-lg text-sm focus-ring outline-none"
+              />
+           </div>
+           <select 
+             value={statusFilter}
+             onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+             className="px-4 py-2 bg-white border border-[#E8EAED] rounded-lg text-sm focus-ring outline-none min-w-[140px]"
+           >
+             <option value="all">All Statuses</option>
+             <option value="active">Active</option>
+             <option value="draft">Draft</option>
+             <option value="closed">Closed</option>
+           </select>
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <table style={{ width: '100%', tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '40%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '20%' }} />
+            </colgroup>
+            <thead className="bg-[#F5F6FA] border-b border-[#E8EAED]">
+              <tr className="text-[12px] font-bold text-[#9BA5B4] uppercase tracking-wider">
+                <th className="px-6 py-4">Job Title</th>
+                <th className="px-6 py-4 text-center">Status</th>
+                <th className="px-6 py-4">Created Date</th>
+                <th className="px-6 py-4"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#F5F6FA]">
+              {paginatedJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-20 text-center text-[#5A6474]">No jobs found matching your filters.</td>
+                </tr>
+              ) : (
+                paginatedJobs.map((job, i) => (
+                  <tr 
+                    key={job.id} 
+                    onClick={() => router.push(`/dashboard/jobs/${job.id}/shortlist`)}
+                    className="hover:bg-[#F8F9FC] transition-colors duration-150 cursor-pointer group"
+                  >
+                    <td className="px-6 py-5">
+                      <div className="font-bold text-[#0F1621] line-clamp-1" title={job.title}>{job.title}</div>
+                    </td>
+                    <td className="px-6 py-5 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                        job.status === "active" 
+                          ? "bg-[#2B71F0] text-white border-[#2B71F0]" 
+                          : "bg-[#E8EAED] text-[#5A6474] border-[#E8EAED]"
+                      }`}>
+                        {job.status === "active" && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
+                        {job.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 text-[#5A6474] text-sm">
+                      {getRelativeTime(job.createdAt)}
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <button className="text-[#2B71F0] font-bold text-xs hover:underline opacity-0 group-hover:opacity-100 transition-opacity">View details</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile View */}
+        <div className="md:hidden divide-y divide-[#F5F6FA]">
+          {paginatedJobs.map((job) => (
+            <div 
+              key={job.id} 
               onClick={() => router.push(`/dashboard/jobs/${job.id}/shortlist`)}
-              className="bg-white rounded-xl border border-neutral-200 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 cursor-pointer hover:border-primary-300 hover:shadow-card transition-card group shadow-sm"
+              className="p-5 active:bg-[#F8F9FC] space-y-3"
             >
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-neutral-800 group-hover:text-primary-500 transition-colors">{job.title}</h3>
-                <div className="flex items-center gap-4 text-[12px] text-neutral-400">
-                  <span className="bg-successLight text-success px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest text-[10px] border border-success/20">{job.status}</span>
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" /></svg>
-                    Created {new Date(job.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-primary-500 font-semibold text-sm group-hover:translate-x-1 transition-transform">
-                View shortlist
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+              <div className="font-bold text-[#0F1621]">{job.title}</div>
+              <div className="flex items-center justify-between">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                  job.status === "active" ? "bg-[#2B71F0] text-white" : "bg-[#E8EAED] text-[#5A6474]"
+                }`}>
+                  {job.status}
+                </span>
+                <span className="text-[12px] text-[#9BA5B4]">{getRelativeTime(job.createdAt)}</span>
               </div>
             </div>
-          ))
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-[#E8EAED] flex items-center justify-between bg-[#F8F9FC]">
+             <button 
+               disabled={currentPage === 1}
+               onClick={() => setCurrentPage(p => p - 1)}
+               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+             >
+               Previous
+             </button>
+             <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-widest">
+               Page {currentPage} of {totalPages}
+             </span>
+             <button 
+               disabled={currentPage === totalPages}
+               onClick={() => setCurrentPage(p => p + 1)}
+               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+             >
+               Next
+             </button>
+          </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }

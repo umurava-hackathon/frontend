@@ -1,275 +1,246 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkCreateJob } from "@/store/slices/dashboardSlice";
 
-type WeightKey = "skills" | "experience" | "education" | "relevance";
-
-function sumWeights(w: Record<WeightKey, number>) {
-  return w.skills + w.experience + w.education + w.relevance;
-}
-
-function adjustWeights(current: Record<WeightKey, number>, changedKey: WeightKey, nextValue: number) {
-  const clamped = Math.max(0, Math.min(100, Math.round(nextValue)));
-  const others: WeightKey[] = (["skills", "experience", "education", "relevance"] as WeightKey[]).filter((k) => k !== changedKey);
-
-  const remaining = 100 - clamped;
-  const sumOthers = others.reduce((acc, k) => acc + current[k], 0);
-  if (sumOthers <= 0) {
-    const base = Math.floor(remaining / others.length);
-    const rem = remaining - base * others.length;
-    const out = { ...current, [changedKey]: clamped } as Record<WeightKey, number>;
-    others.forEach((k, idx) => {
-      out[k] = base + (idx === 0 ? rem : 0);
-    });
-    return out;
-  }
-
-  const scaledFloats = others.map((k) => ({ k, v: (current[k] / sumOthers) * remaining }));
-  const scaledInts = scaledFloats.map((x) => ({ k: x.k, v: Math.floor(x.v) }));
-  let drift = remaining - scaledInts.reduce((acc, x) => acc + x.v, 0);
-
-  scaledFloats.sort((a, b) => (b.v - Math.floor(b.v)) - (a.v - Math.floor(a.v)));
-  const out = { ...current, [changedKey]: clamped } as Record<WeightKey, number>;
-  for (const x of scaledInts) out[x.k] = x.v;
-  let i = 0;
-  while (drift > 0) {
-    const k = scaledFloats[i % scaledFloats.length].k;
-    out[k] += 1;
-    drift -= 1;
-    i += 1;
-  }
-  return out;
-}
-
 export default function JobCreatePage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const jobCreate = useAppSelector((s) => s.dashboard.jobCreate);
+  const { loading, error, createdJobId } = useAppSelector((s) => s.dashboard.jobCreate);
 
-  const [title, setTitle] = useState("Senior Backend Engineer");
-  const [description, setDescription] = useState(
-    "Build and maintain backend services for HR workflows, focusing on reliability, security, and clear APIs."
-  );
-  const [skills, setSkills] = useState<string[]>(["Node.js", "TypeScript", "REST API", "MongoDB"]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [department, setDepartment] = useState("");
+  const [location, setLocation] = useState("");
+  const [employmentType, setEmploymentType] = useState("Full-time");
+  
+  const [skills, setSkills] = useState<string[]>(["React", "TypeScript", "Node.js", "MongoDB"]);
   const [skillsInput, setSkillsInput] = useState("");
   const [experienceYears, setExperienceYears] = useState(3);
   const [educationRequirement, setEducationRequirement] = useState("BSc in Computer Science or equivalent");
 
-  const [weights, setWeights] = useState<Record<WeightKey, number>>({
-    skills: 35,
+  const [weights, setWeights] = useState({
+    skills: 40,
     experience: 30,
     education: 15,
-    relevance: 20
+    relevance: 15
   });
 
-  const topNDefault = 10;
+  useEffect(() => {
+    if (createdJobId) {
+      router.push(`/dashboard/jobs/${createdJobId}/ingest`);
+    }
+  }, [createdJobId, router]);
 
-  const canSubmit = useMemo(() => {
-    return title.trim().length > 0 && description.trim().length > 0 && skills.length > 0 && sumWeights(weights) === 100;
-  }, [title, description, skills.length, weights]);
+  const addSkill = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && skillsInput.trim()) {
+      e.preventDefault();
+      if (!skills.includes(skillsInput.trim())) {
+        setSkills([...skills, skillsInput.trim()]);
+      }
+      setSkillsInput("");
+    }
+  };
 
-  async function onSubmit(e: React.FormEvent) {
+  const removeSkill = (s: string) => setSkills(skills.filter((item) => item !== s));
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
-
-    const payload = {
-      title: title.trim(),
-      description: description.trim(),
+    void dispatch(thunkCreateJob({
+      title,
+      description,
+      department,
+      location,
+      employmentType,
       requirements: {
         mustHave: skills,
-        yearsExperienceMin: Math.max(0, Math.round(experienceYears)),
-        education: [educationRequirement.trim()],
-        niceToHave: [],
-        keywords: []
+        yearsExperienceMin: experienceYears,
+        education: [educationRequirement]
       },
-      scoringWeights: {
-        skills: weights.skills,
-        experience: weights.experience,
-        education: weights.education,
-        relevance: weights.relevance
-      },
-      screeningConfig: { defaultTopN: topNDefault, maxCandidatesPerRun: 200, language: "en" }
-    };
+      scoringWeights: weights,
+      screeningConfig: { defaultTopN: 10, maxCandidatesPerRun: 100 }
+    }) as any);
+  };
 
-    const action = await dispatch(thunkCreateJob(payload) as any);
-    if (thunkCreateJob.fulfilled.match(action)) {
-      const jobId = action.payload.id;
-      router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/ingest`);
-      return;
-    }
-  }
-
-  function addSkillTag() {
-    const raw = skillsInput.trim();
-    if (!raw) return;
-    const normalized = raw.replace(/\s+/g, " ");
-    if (skills.some((s) => s.toLowerCase() === normalized.toLowerCase())) return;
-    setSkills((prev) => [...prev, normalized].slice(0, 20));
-    setSkillsInput("");
-  }
+  const weightSum = weights.skills + weights.experience + weights.education + weights.relevance;
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <section className="space-y-8 animate-fade-in-up">
-        <div className="px-4 sm:px-0">
-          <h1 className="text-2xl font-semibold text-neutral-800">Create a job</h1>
-          <p className="mt-1 text-[14px] text-neutral-500">
-            Define must-have skills, experience and education requirements, and recruiter-adjustable scoring weights.
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-16">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-[#0F1621]">Create Recruitment Campaign</h1>
+        <p className="text-sm text-[#5A6474]">Set up your job requirements and AI scoring weights to begin screening.</p>
+      </div>
 
-        <form onSubmit={onSubmit} className="bg-white rounded-xl border border-neutral-200 p-6 sm:p-8 space-y-10 shadow-card transition-card">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <label className="block space-y-1.5">
-              <div className="text-[13px] font-medium text-neutral-700">Job title</div>
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        {/* Basic Info */}
+        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest mb-2">
+            <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
+            Basic Information
+          </div>
+          
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-[#5A6474]">Job Title</label>
               <input
+                required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white placeholder:text-neutral-400 focus-ring transition-card"
-                placeholder="e.g., Backend Engineer"
-                required
+                placeholder="e.g. Senior Fullstack Engineer"
+                className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
               />
-            </label>
-            <label className="block space-y-1.5">
-              <div className="text-[13px] font-medium text-neutral-700">Experience level (years)</div>
-              <input
-                type="number"
-                min={0}
-                value={experienceYears}
-                onChange={(e) => setExperienceYears(Number(e.target.value))}
-                className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white focus-ring transition-card"
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Department</label>
+                <input
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="e.g. Engineering"
+                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Location</label>
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. Remote / Kigali"
+                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Employment Type</label>
+                <select
+                  value={employmentType}
+                  onChange={(e) => setEmploymentType(e.target.value)}
+                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                >
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Contract</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-semibold text-[#5A6474]">Job Description</label>
+              <textarea
                 required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Outline the core responsibilities and expectations..."
+                className="w-full min-h-[160px] rounded-lg border border-[#E8EAED] bg-white px-4 py-3 text-sm focus-ring transition-all leading-relaxed"
               />
-            </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Requirements */}
+        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-6">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest mb-2">
+            <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
+            Candidate Requirements
           </div>
 
-          <label className="block space-y-1.5">
-            <div className="text-[13px] font-medium text-neutral-700">Job description</div>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white min-h-[140px] focus-ring transition-card"
-              required
-            />
-          </label>
-
-          <div className="space-y-4">
-            <div className="text-[13px] font-medium text-neutral-700">Required skills (tags)</div>
-            <div className="flex flex-wrap gap-2">
-              {skills.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-2 rounded-full bg-primary-50 border border-primary-200 px-3 py-1 text-[12px] font-medium text-primary-700 transition-card hover:scale-[1.02]">
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => setSkills((prev) => prev.filter((x) => x !== tag))}
-                    className="text-primary-400 hover:text-danger focus:outline-none"
-                    aria-label={`Remove ${tag}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-[13px] font-semibold text-[#5A6474]">Core Skills (Press Enter to add)</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {skills.map((s) => (
+                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EEF4FF] text-[#2B71F0] text-[12px] font-bold border border-[#EEF4FF]">
+                    {s}
+                    <button type="button" onClick={() => removeSkill(s)} className="hover:text-[#1A5CE0]">&times;</button>
+                  </span>
+                ))}
+              </div>
               <input
                 value={skillsInput}
                 onChange={(e) => setSkillsInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkillTag();
-                  }
-                }}
-                className="flex-1 rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white placeholder:text-neutral-400 focus-ring transition-card"
-                placeholder="Type a skill and press Enter"
+                onKeyDown={addSkill}
+                placeholder="Type a skill and hit enter..."
+                className="w-full rounded-lg border border-[#E8EAED] bg-[#F8F9FC] px-4 py-2.5 text-sm focus-ring transition-all"
               />
-              <button 
-                type="button" 
-                onClick={addSkillTag} 
-                className="px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 rounded-lg text-sm font-medium hover:bg-neutral-50 transition-colors"
-              >
-                Add skill
-              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Minimum Years of Experience</label>
+                <input
+                  type="number"
+                  value={experienceYears}
+                  onChange={(e) => setExperienceYears(Number(e.target.value))}
+                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Education Requirement</label>
+                <input
+                  value={educationRequirement}
+                  onChange={(e) => setEducationRequirement(e.target.value)}
+                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Weights */}
+        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest">
+              <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
+              AI Scoring Weights
+            </div>
+            <div className={`text-[11px] font-bold px-3 py-1 rounded-full border ${weightSum === 100 ? "bg-[#F0FDF4] text-[#10B981] border-[#10B981]" : "bg-red-50 text-red-600 border-red-100"}`}>
+              Total: {weightSum}%
             </div>
           </div>
 
-          <label className="block space-y-1.5">
-            <div className="text-[13px] font-medium text-neutral-700">Education requirement</div>
-            <input
-              value={educationRequirement}
-              onChange={(e) => setEducationRequirement(e.target.value)}
-              className="w-full rounded-lg border border-neutral-300 px-3.5 py-2.5 text-[14px] text-neutral-800 bg-white focus-ring transition-card"
-              required
-            />
-          </label>
-
-          <div className="space-y-8 pt-6 border-t border-neutral-100">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="text-[13px] font-medium text-neutral-700 uppercase tracking-wider">Custom scoring weights</div>
-                <div className="text-[12px] text-neutral-500 mt-1">Adjust based on your priority. Sliders must sum to 100%.</div>
-              </div>
-              <div className={`px-3 py-1 rounded-full text-[12px] font-semibold flex items-center gap-1.5 ${sumWeights(weights) === 100 ? "bg-successLight text-success border border-success/20" : "bg-dangerLight text-danger border border-danger/20"}`}>
-                <span className="opacity-70">Sum:</span>
-                <span>{sumWeights(weights)}%</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8">
-              {(
-                [
-                  { key: "skills", label: "Skills", hint: "Concrete technical match" },
-                  { key: "experience", label: "Experience", hint: "Depth of track record" },
-                  { key: "education", label: "Education", hint: "Formal education signals" },
-                  { key: "relevance", label: "Relevance", hint: "Overall role fit" }
-                ] as Array<{ key: WeightKey; label: string; hint: string }>
-              ).map((w) => (
-                <div key={w.key} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-[13px] text-neutral-600">
-                      {w.label} <span className="text-[11px] text-neutral-400 font-normal ml-1">— {w.hint}</span>
-                    </div>
-                    <div className="text-[13px] text-primary-500 font-semibold">{weights[w.key]}%</div>
-                  </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {(["skills", "experience", "education", "relevance"] as const).map((w) => (
+              <div key={w} className="space-y-2">
+                <label className="text-[12px] font-bold text-[#5A6474] capitalize">{w}</label>
+                <div className="relative">
                   <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={weights[w.key]}
-                    onChange={(e) => {
-                      const next = Number(e.target.value);
-                      setWeights((cur) => adjustWeights(cur, w.key, next));
-                    }}
-                    className="w-full h-1 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-primary-500 focus-ring"
+                    type="number"
+                    value={weights[w]}
+                    onChange={(e) => setWeights({ ...weights, [w]: Number(e.target.value) })}
+                    className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm font-bold text-[#0F1621] focus-ring transition-all"
                   />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#9BA5B4]">%</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {jobCreate.error ? (
-            <div className="p-4 rounded-lg bg-dangerLight text-sm text-danger border border-danger/20">
-              {jobCreate.error}
-            </div>
-          ) : null}
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 pt-6">
-            <button
-              type="submit"
-              disabled={!canSubmit || jobCreate.loading}
-              className="px-10 py-3.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-sm"
-            >
-              {jobCreate.loading ? "Creating..." : "Save job and continue"}
-            </button>
-            <div className="text-[12px] text-neutral-400 italic leading-relaxed max-w-xs">
-              Recruiter always keeps the final word. AI handles the heavy lifting, you handle the selection.
-            </div>
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium animate-shake">
+            {error}
           </div>
-        </form>
-      </section>
+        )}
+
+        <div className="flex items-center justify-end gap-4 pt-4">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-8 py-3 text-sm font-bold text-[#5A6474] hover:text-[#0F1621] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading || weightSum !== 100}
+            className="bg-[#2B71F0] hover:bg-[#1A5CE0] text-white px-10 py-3 rounded-xl font-bold text-sm shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+          >
+            {loading ? "Creating Campaign..." : "Create Campaign"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

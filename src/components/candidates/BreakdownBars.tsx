@@ -1,61 +1,44 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 
-function classNames(...xs: Array<string | false | undefined>) {
-  return xs.filter(Boolean).join(" ");
+interface BreakdownBarsProps {
+  breakdown: {
+    skills: number;
+    experience: number;
+    education: number;
+    relevance: number;
+  };
 }
 
-function colorForScore(score: number) {
-  if (score >= 85) return "bg-success";
-  if (score >= 70) return "bg-primary-500";
-  return "bg-warning";
-}
-
-export function BreakdownBars({ breakdown }: { breakdown: Record<string, number> }) {
-  const [widths, setWidths] = useState<Record<string, number>>({
-    skills: 0,
-    experience: 0,
-    education: 0,
-    relevance: 0
-  });
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setWidths({
-        skills: breakdown.skills ?? 0,
-        experience: breakdown.experience ?? 0,
-        education: breakdown.education ?? 0,
-        relevance: breakdown.relevance ?? 0
-      });
-    }, 100);
-    return () => clearTimeout(t);
-  }, [breakdown]);
+export function BreakdownBars({ breakdown }: BreakdownBarsProps) {
+  const items = [
+    { label: "Skills", value: breakdown.skills },
+    { label: "Experience", value: breakdown.experience },
+    { label: "Education", value: breakdown.education },
+    { label: "Relevance", value: breakdown.relevance },
+  ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-      {(Object.entries(widths) as Array<[string, number]>).map(([key, val], idx) => (
-        <div key={key} className="space-y-1.5">
-          <div className="flex justify-between items-center px-0.5">
-            <div className="text-[12px] font-normal capitalize text-neutral-500 min-w-[80px]">
-              {key}
+    <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+      {items.map((item) => {
+        const color = item.value >= 90 ? "#10B981" : "#2B71F0";
+        
+        return (
+          <div key={item.label} className="space-y-1.5">
+            <div className="flex justify-between items-center text-[11px] font-semibold text-[#5A6474] uppercase tracking-wider">
+              <span>{item.label}</span>
+              <span className="text-[#0F1621]">{item.value}%</span>
             </div>
-            <div className="text-[12px] font-semibold text-neutral-800">{breakdown[key] ?? 0}%</div>
+            <div className="h-1.5 w-full bg-[#E8EAED] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${item.value}%`, backgroundColor: color }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
-            <div
-              className={classNames(
-                "h-full rounded-full transition-all duration-600 ease-out",
-                colorForScore(breakdown[key] ?? 0)
-              )}
-              style={{ 
-                width: `${val}%`,
-                transitionDelay: `${idx * 100}ms`
-              }}
-            />
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

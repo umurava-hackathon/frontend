@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkFetchJob, thunkFetchResults } from "@/store/slices/dashboardSlice";
 import type { PDFCandidate } from "@/components/reports/CandidateReportPDF";
@@ -37,6 +37,7 @@ function ScoreGrid({ bd }: { bd: { skills: number; experience: number; education
 export default function ReportPage() {
   const params       = useParams<{ jobId: string }>();
   const searchParams = useSearchParams();
+  const router       = useRouter();
   const jobId        = params.jobId;
   const dispatch     = useAppDispatch();
   const autoPrint    = searchParams.get("autoprint") === "1";
@@ -46,6 +47,9 @@ export default function ReportPage() {
   const loading    = useAppSelector((s) => s.dashboard.loading);
   const didPrint   = useRef(false);
 
+  const isCorrectJob = results?.jobId === jobId;
+  const isReady = !loading && isCorrectJob && results?.status !== "queued" && results?.status !== "running";
+
   useEffect(() => {
     if (!jobId) return;
     void dispatch(thunkFetchResults(jobId) as any);
@@ -53,14 +57,14 @@ export default function ReportPage() {
   }, [jobId, dispatch]);
 
   useEffect(() => {
-    if (autoPrint && !loading && results && !didPrint.current) {
+    if (autoPrint && isReady && !didPrint.current) {
       didPrint.current = true;
       const t = setTimeout(() => window.print(), 700);
       return () => clearTimeout(t);
     }
-  }, [autoPrint, loading, results]);
+  }, [autoPrint, isReady]);
 
-  const shortlist = (results?.shortlist ?? []) as any[];
+  const shortlist = (isCorrectJob ? results?.shortlist ?? [] : []) as any[];
   const jobTitle  = currentJob?.title ?? "Screening Report";
   const runDate   = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
@@ -68,14 +72,44 @@ export default function ReportPage() {
     succeeded: "bg-emerald-50 text-emerald-700",
     partial:   "bg-amber-50  text-amber-700",
     failed:    "bg-red-50    text-red-600",
+    running:   "bg-primary-50  text-primary-600 animate-pulse",
+    queued:    "bg-neutral-100 text-neutral-500",
   };
 
-  if (loading && !results) {
+  if ((loading || !isCorrectJob) && results?.status !== "failed") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-3 text-neutral-400 text-sm animate-pulse">
           <span className="h-2 w-2 rounded-full bg-neutral-300 animate-bounce" />
-          Generating report…
+          Loading report data…
+        </div>
+      </div>
+    );
+  }
+
+  if (isCorrectJob && (results?.status === "queued" || results?.status === "running")) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+        <div className="h-16 w-16 rounded-full border-4 border-primary-100 border-t-primary-500 animate-spin" />
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-bold text-neutral-800">AI Screening in Progress</h2>
+          <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+            The report will be available as soon as the AI finishes analyzing your candidates.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/shortlist`)}
+            className="px-6 py-2 bg-white border border-neutral-200 rounded-lg text-sm font-bold hover:bg-neutral-50 transition-all"
+          >
+            Back to shortlist
+          </button>
+          <button 
+            onClick={() => void dispatch(thunkFetchResults(jobId) as any)}
+            className="px-6 py-2 bg-primary-500 text-white rounded-lg text-sm font-bold hover:bg-primary-600 transition-all"
+          >
+            Check status
+          </button>
         </div>
       </div>
     );
@@ -89,20 +123,22 @@ export default function ReportPage() {
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
-              onClick={() => window.close()}
-              className="shrink-0 text-neutral-400 hover:text-neutral-700 transition-colors"
+              onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/shortlist`)}
+              className="shrink-0 flex items-center gap-2 text-primary-500 hover:text-primary-600 font-bold text-sm transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
+              <span className="hidden sm:inline">Back</span>
             </button>
+            <div className="h-4 w-[1px] bg-neutral-200 mx-1 hidden sm:block" />
             <span className="text-sm font-semibold text-neutral-800 truncate">{jobTitle}</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <span className="hidden sm:block text-xs text-neutral-400">
+            <span className="hidden lg:block text-xs text-neutral-400">
               {shortlist.length} candidate{shortlist.length !== 1 ? "s" : ""} · Top {results?.topN ?? "?"}
             </span>
-<PDFDownloadButton
+            <PDFDownloadButton
               variant="full"
               jobTitle={jobTitle}
               jobId={jobId}

@@ -1,95 +1,212 @@
+import axios from "axios";
+
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      ...(init?.body && !(init.headers as any)?.["Content-Type"] ? { "content-type": "application/json" } : {})
-    }
-  });
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true, // important for cookies
+});
 
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
+let accessToken: string | null = null;
+let store: any = null;
 
-  if (!res.ok) {
-    const message = json?.error?.message ?? json?.error ?? res.statusText;
-    throw new Error(typeof message === "string" ? message : "Request failed");
+export const injectStore = (_store: any) => {
+  store = _store;
+};
+
+// Request interceptor: attach token
+api.interceptors.request.use((config) => {
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  return config;
+});
 
-  return json as T;
+// Response interceptor: handle token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Trigger refresh if token is expired OR if no token was provided (new tab scenario)
+    const isUnauthorized = error.response?.status === 401;
+    const isExpired = error.response?.data?.code === "TOKEN_EXPIRED";
+    const isMissing = error.response?.data?.code === "UNAUTHORIZED" && !accessToken;
+
+    if (isUnauthorized && (isExpired || isMissing) && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const { data } = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
+        accessToken = data.data.accessToken;
+        
+        // Update Redux state if store was injected
+        if (store) {
+          const { setAccessToken } = require("../store/slices/dashboardSlice");
+          store.dispatch(setAccessToken(accessToken));
+        }
+        
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        accessToken = null;
+        if (store) {
+          const { clearAuth } = require("../store/slices/dashboardSlice");
+          store.dispatch(clearAuth());
+        }
+        // Only redirect if we aren't already on the login/register pages
+        if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/register")) {
+          window.location.href = "/login";
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// --- Auth API ---
+export async function apiLogin(credentials: any) {
+  const res = await api.post("/auth/login", credentials);
+  accessToken = res.data.data.accessToken;
+  return res.data;
 }
 
-export async function apiListJobs(): Promise<{ data: Array<{ id: string; title: string; status: string }> }> {
-  return request("/jobs", { method: "GET" });
+export async function apiRegister(userData: any) {
+  const res = await api.post("/auth/register", userData);
+  accessToken = res.data.data.accessToken;
+  return res.data;
 }
 
-export async function apiCreateJob(payload: any): Promise<{ data: { id: string; createdAt: string } }> {
-  return request("/jobs", { method: "POST", body: JSON.stringify(payload) });
+export async function apiLogout() {
+  await api.post("/auth/logout");
+  accessToken = null;
+}
+
+export async function apiGetMe() {
+  const res = await api.get("/auth/me");
+  return res.data;
+}
+
+// --- Dashboard API ---
+export async function apiGetDashboardStats() {
+  const res = await api.get("/dashboard/stats");
+  return res.data;
+}
+
+export async function apiGetRecentJobs() {
+  const res = await api.get("/dashboard/recent-jobs");
+  return res.data;
+}
+
+export async function apiGetRecentActivity() {
+  const res = await api.get("/dashboard/activity");
+  return res.data;
+}
+
+// --- Account API ---
+export async function apiGetAccountProfile() {
+  const res = await api.get("/account/profile");
+  return res.data;
+}
+
+export async function apiUpdateAccountProfile(payload: any) {
+  const res = await api.patch("/account/profile", payload);
+  return res.data;
+}
+
+export async function apiUpdateAccountPassword(payload: any) {
+  const res = await api.patch("/account/password", payload);
+  return res.data;
+}
+
+export async function apiGetAccountSessions() {
+  const res = await api.get("/account/sessions");
+  return res.data;
+}
+
+export async function apiRevokeSession(sessionId: string) {
+  const res = await api.delete(`/account/sessions/${encodeURIComponent(sessionId)}`);
+  return res.data;
+}
+
+export async function apiRevokeAllOtherSessions() {
+  const res = await api.delete("/account/sessions");
+  return res.data;
+}
+
+// --- Jobs API ---
+export async function apiListJobs(params?: { status?: string; limit?: number }): Promise<{ data: any[] }> {
+  const res = await api.get("/jobs", { params });
+  return res.data;
+}
+
+export async function apiGetJob(jobId: string): Promise<{ data: any }> {
+  const res = await api.get(`/jobs/${encodeURIComponent(jobId)}`);
+  return res.data;
+}
+
+export async function apiCreateJob(payload: any): Promise<{ data: any }> {
+  const res = await api.post("/jobs", payload);
+  return res.data;
+}
+
+export async function apiUpdateJob(jobId: string, payload: any): Promise<{ data: any }> {
+  const res = await api.put(`/jobs/${encodeURIComponent(jobId)}`, payload);
+  return res.data;
+}
+
+// --- Applicants API ---
+export async function apiGetJobApplicants(jobId: string): Promise<{ data: any[] }> {
+  const res = await api.get(`/jobs/${encodeURIComponent(jobId)}/applicants`);
+  return res.data;
 }
 
 export async function apiIngestUmuravaProfiles(jobId: string, profiles: any[]): Promise<any> {
-  return request(`/jobs/${encodeURIComponent(jobId)}/applicants/profiles`, {
-    method: "POST",
-    body: JSON.stringify({ profiles })
-  });
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/profiles`, { profiles });
+  return res.data;
 }
 
 export async function apiIngestCsv(jobId: string, csvFile: File, mapping?: any): Promise<any> {
   const form = new FormData();
   form.append("file", csvFile);
   if (mapping) form.append("mapping", JSON.stringify(mapping));
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/csv`, form);
+  return res.data;
+}
 
-  const url = `${API_BASE}/jobs/${encodeURIComponent(jobId)}/applicants/csv`;
-  const res = await fetch(url, { method: "POST", body: form });
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
-  if (!res.ok) {
-    const message = json?.error?.message ?? res.statusText;
-    throw new Error(message);
-  }
-  return json;
+export async function apiIngestZip(jobId: string, zipFile: File): Promise<any> {
+  const form = new FormData();
+  form.append("file", zipFile);
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/zip`, form);
+  return res.data;
 }
 
 export async function apiUploadResume(jobId: string, applicantId: string, pdfFile: File): Promise<any> {
   const form = new FormData();
   form.append("file", pdfFile);
-
-  // Backend expects applicantId in req.body alongside multipart.
   form.append("applicantId", applicantId);
-
-  const url = `${API_BASE}/jobs/${encodeURIComponent(jobId)}/applicants/resume`;
-  const res = await fetch(url, { method: "POST", body: form });
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
-  if (!res.ok) {
-    const message = json?.error?.message ?? res.statusText;
-    throw new Error(message);
-  }
-  return json;
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/resume`, form);
+  return res.data;
 }
 
-export async function apiTriggerScreening(jobId: string, topN?: number, applicantIds?: string[]): Promise<any> {
-  return request(`/jobs/${encodeURIComponent(jobId)}/screen`, {
-    method: "POST",
-    body: JSON.stringify({ topN, applicantIds })
-  });
+// --- Screening API ---
+export async function apiTriggerScreening(jobId: string, topN?: number): Promise<any> {
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/screen`, { topN });
+  return res.data;
 }
 
-export async function apiGetJobResults(jobId: string): Promise<any> {
-  return request(`/jobs/${encodeURIComponent(jobId)}/results`, { method: "GET" });
+export async function apiListJobResults(jobId: string): Promise<{ data: any[] }> {
+  const res = await api.get(`/jobs/${encodeURIComponent(jobId)}/results`);
+  return res.data;
 }
 
-export async function apiGetJobApplicants(jobId: string): Promise<any> {
-  return request(`/jobs/${encodeURIComponent(jobId)}/applicants`, { method: "GET" });
+export async function apiGetJobResults(jobId: string): Promise<{ data: any }> {
+  const res = await api.get(`/jobs/${encodeURIComponent(jobId)}/results/latest`);
+  return res.data;
 }
 
-export async function apiGetJob(jobId: string): Promise<{ data: any }> {
-  return request(`/jobs/${encodeURIComponent(jobId)}`, { method: "GET" });
+export async function apiGetCandidateReasoning(applicantId: string): Promise<{ data: any }> {
+  const res = await api.get(`/applicants/${encodeURIComponent(applicantId)}/reasoning`);
+  return res.data;
 }
-
-export async function apiUpdateJob(jobId: string, payload: any): Promise<{ data: { id: string; updatedAt: string } }> {
-  return request(`/jobs/${encodeURIComponent(jobId)}`, { method: "PUT", body: JSON.stringify(payload) });
-}
-

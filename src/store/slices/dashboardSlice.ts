@@ -1,48 +1,55 @@
 "use client";
 
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiCreateJob, apiGetJob, apiGetJobApplicants, apiGetJobResults, apiIngestCsv, apiIngestUmuravaProfiles, apiListJobs, apiTriggerScreening, apiUpdateJob, apiUploadResume } from "../../lib/api";
+import { 
+  apiCreateJob, apiGetJob, apiGetJobApplicants, apiGetJobResults, 
+  apiIngestCsv, apiIngestUmuravaProfiles, apiIngestZip, apiListJobs, 
+  apiTriggerScreening, apiUpdateJob, apiUploadResume,
+  apiLogin, apiRegister, apiLogout, apiGetMe,
+  apiGetDashboardStats, apiGetRecentJobs, apiGetRecentActivity,
+  apiGetAccountProfile, apiUpdateAccountProfile, apiUpdateAccountPassword,
+  apiGetAccountSessions, apiRevokeSession, apiRevokeAllOtherSessions,
+  apiListJobResults
+} from "../../lib/api";
 
-export type JobCreateState = {
+export type AuthState = {
+  user: any | null;
+  accessToken: string | null;
   loading: boolean;
-  error?: string;
-  createdJobId?: string;
+  error: string | null;
 };
 
-export type ScreeningState = {
-  triggering: boolean;
-  error?: string;
-  lastScreeningResult?: any;
-};
-
-export type CandidatesResult = {
-  screeningResultId: string;
-  jobId: string;
-  status: string;
-  topN: number;
-  shortlist: Array<any>;
-  errors?: Array<{ stage: string; code: string; message: string }>;
-};
-
-export type JobUpdateState = {
-  loading: boolean;
-  error?: string;
-  success: boolean;
+export type DashboardStats = {
+  totalJobs: number;
+  activeJobs: number;
+  totalCandidates: number;
+  screeningRuns: number;
+  avgMatchScore: number;
+  thisWeekJobs: number;
 };
 
 export type DashboardState = {
+  auth: AuthState;
+  stats: DashboardStats | null;
+  recentJobs: any[];
+  activity: any[];
   jobList: Array<{ id: string; title: string; status: string; createdAt?: string }>;
   selectedJobId?: string;
   currentJob?: any;
-  jobCreate: JobCreateState;
-  jobUpdate: JobUpdateState;
-  screening: ScreeningState;
-  results?: CandidatesResult;
+  jobCreate: { loading: boolean; error?: string; createdJobId?: string };
+  jobUpdate: { loading: boolean; error?: string; success: boolean };
+  screening: { triggering: boolean; error?: string; lastScreeningResult?: any };
+  results?: any;
   applicants?: any[];
+  sessions: any[];
   loading: boolean;
 };
 
 const initialState: DashboardState = {
+  auth: { user: null, accessToken: null, loading: false, error: null },
+  stats: null,
+  recentJobs: [],
+  activity: [],
   jobList: [],
   selectedJobId: undefined,
   currentJob: undefined,
@@ -51,9 +58,77 @@ const initialState: DashboardState = {
   screening: { triggering: false, error: undefined, lastScreeningResult: undefined },
   results: undefined,
   applicants: undefined,
+  sessions: [],
   loading: false
 };
 
+// --- Auth Thunks ---
+export const thunkLogin = createAsyncThunk("auth/login", async (credentials: any) => {
+  const res = await apiLogin(credentials);
+  return res.data;
+});
+
+export const thunkRegister = createAsyncThunk("auth/register", async (userData: any) => {
+  const res = await apiRegister(userData);
+  return res.data;
+});
+
+export const thunkLogout = createAsyncThunk("auth/logout", async () => {
+  await apiLogout();
+});
+
+export const thunkFetchMe = createAsyncThunk("auth/me", async () => {
+  const res = await apiGetMe();
+  return res.data;
+});
+
+// --- Dashboard Thunks ---
+export const thunkFetchDashboardStats = createAsyncThunk("dashboard/fetchStats", async () => {
+  const res = await apiGetDashboardStats();
+  return res.data;
+});
+
+export const thunkFetchRecentJobs = createAsyncThunk("dashboard/fetchRecentJobs", async () => {
+  const res = await apiGetRecentJobs();
+  return res.data;
+});
+
+export const thunkFetchActivity = createAsyncThunk("dashboard/fetchActivity", async () => {
+  const res = await apiGetRecentActivity();
+  return res.data;
+});
+
+// --- Account Thunks ---
+export const thunkFetchAccountProfile = createAsyncThunk("account/fetchProfile", async () => {
+  const res = await apiGetAccountProfile();
+  return res.data;
+});
+
+export const thunkUpdateAccountProfile = createAsyncThunk("account/updateProfile", async (payload: any) => {
+  const res = await apiUpdateAccountProfile(payload);
+  return res.data;
+});
+
+export const thunkUpdateAccountPassword = createAsyncThunk("account/updatePassword", async (payload: any) => {
+  const res = await apiUpdateAccountPassword(payload);
+  return res.data;
+});
+
+export const thunkFetchAccountSessions = createAsyncThunk("account/fetchSessions", async () => {
+  const res = await apiGetAccountSessions();
+  return res.data;
+});
+
+export const thunkRevokeSession = createAsyncThunk("account/revokeSession", async (sessionId: string) => {
+  await apiRevokeSession(sessionId);
+  return sessionId;
+});
+
+export const thunkRevokeAllOtherSessions = createAsyncThunk("account/revokeAllOther", async () => {
+  await apiRevokeAllOtherSessions();
+});
+
+// --- Existing Thunks ---
 export const thunkListJobs = createAsyncThunk("dashboard/listJobs", async () => {
   return (await apiListJobs()).data;
 });
@@ -74,6 +149,10 @@ export const thunkIngestCsv = createAsyncThunk("dashboard/ingestCsv", async (arg
   return apiIngestCsv(args.jobId, args.csvFile, args.mapping);
 });
 
+export const thunkIngestZip = createAsyncThunk("dashboard/ingestZip", async (args: { jobId: string; zipFile: File }) => {
+  return apiIngestZip(args.jobId, args.zipFile);
+});
+
 export const thunkUploadResume = createAsyncThunk(
   "dashboard/uploadResume",
   async (args: { jobId: string; applicantId: string; pdfFile: File }) => {
@@ -89,7 +168,7 @@ export const thunkTriggerScreening = createAsyncThunk(
 );
 
 export const thunkFetchResults = createAsyncThunk("dashboard/fetchResults", async (jobId: string) => {
-  return (await apiGetJobResults(jobId)).data as CandidatesResult;
+  return (await apiGetJobResults(jobId)).data;
 });
 
 export const thunkFetchApplicants = createAsyncThunk("dashboard/fetchApplicants", async (jobId: string) => {
@@ -120,63 +199,64 @@ const slice = createSlice({
     },
     resetJobUpdate(state) {
       state.jobUpdate = { loading: false, error: undefined, success: false };
+    },
+    setAccessToken(state, action) {
+      state.auth.accessToken = action.payload;
+    },
+    clearAuth(state) {
+      state.auth = { user: null, accessToken: null, loading: false, error: null };
     }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(thunkListJobs.fulfilled, (state, action) => {
-        state.jobList = action.payload;
+      // --- Auth ---
+      .addCase(thunkLogin.pending, (state) => { state.auth.loading = true; state.auth.error = null; })
+      .addCase(thunkLogin.fulfilled, (state, action) => {
+        state.auth.loading = false;
+        state.auth.user = action.payload.user;
+        state.auth.accessToken = action.payload.accessToken;
       })
-      .addCase(thunkCreateJob.pending, (state) => {
-        state.jobCreate = { loading: true };
+      .addCase(thunkLogin.rejected, (state, action) => { state.auth.loading = false; state.auth.error = action.error.message || "Login failed"; })
+      .addCase(thunkFetchMe.fulfilled, (state, action) => { state.auth.user = action.payload; })
+      .addCase(thunkLogout.fulfilled, (state) => {
+        state.auth = { user: null, accessToken: null, loading: false, error: null };
       })
+
+      // --- Dashboard ---
+      .addCase(thunkFetchDashboardStats.fulfilled, (state, action) => { state.stats = action.payload; })
+      .addCase(thunkFetchRecentJobs.fulfilled, (state, action) => { state.recentJobs = action.payload; })
+      .addCase(thunkFetchActivity.fulfilled, (state, action) => { state.activity = action.payload; })
+
+      // --- Account ---
+      .addCase(thunkFetchAccountProfile.fulfilled, (state, action) => { state.auth.user = action.payload; })
+      .addCase(thunkUpdateAccountProfile.fulfilled, (state, action) => { 
+        if (!action.payload.requiresReauth) state.auth.user = { ...state.auth.user, ...action.payload.user };
+      })
+      .addCase(thunkFetchAccountSessions.fulfilled, (state, action) => { state.sessions = action.payload; })
+      .addCase(thunkRevokeSession.fulfilled, (state, action) => {
+        state.sessions = state.sessions.filter(s => s.sessionId !== action.payload);
+      })
+      .addCase(thunkRevokeAllOtherSessions.fulfilled, (state) => {
+        state.sessions = state.sessions.filter(s => s.isCurrent);
+      })
+
+      // --- Jobs ---
+      .addCase(thunkListJobs.fulfilled, (state, action) => { state.jobList = action.payload; })
       .addCase(thunkCreateJob.fulfilled, (state, action) => {
         state.jobCreate = { loading: false, createdJobId: action.payload.id };
         state.selectedJobId = action.payload.id;
       })
-      .addCase(thunkCreateJob.rejected, (state, action) => {
-        state.jobCreate = { loading: false, error: action.error.message };
-      })
-      .addCase(thunkFetchResults.pending, (state) => {
-        state.loading = true;
-      })
       .addCase(thunkFetchResults.fulfilled, (state, action) => {
-        state.loading = false;
         state.results = action.payload;
-      })
-      .addCase(thunkFetchResults.rejected, (state) => {
-        state.loading = false;
       })
       .addCase(thunkFetchApplicants.fulfilled, (state, action) => {
         state.applicants = action.payload;
       })
-      .addCase(thunkTriggerScreening.pending, (state) => {
-        state.screening.triggering = true;
-        state.screening.error = undefined;
-      })
-      .addCase(thunkTriggerScreening.fulfilled, (state, action) => {
-        state.screening.triggering = false;
-        state.screening.lastScreeningResult = action.payload.data;
-      })
-      .addCase(thunkTriggerScreening.rejected, (state, action) => {
-        state.screening.triggering = false;
-        state.screening.error = action.error.message;
-      })
       .addCase(thunkFetchJob.fulfilled, (state, action) => {
         state.currentJob = action.payload;
-      })
-      .addCase(thunkUpdateJob.pending, (state) => {
-        state.jobUpdate = { loading: true, error: undefined, success: false };
-      })
-      .addCase(thunkUpdateJob.fulfilled, (state) => {
-        state.jobUpdate = { loading: false, error: undefined, success: true };
-      })
-      .addCase(thunkUpdateJob.rejected, (state, action) => {
-        state.jobUpdate = { loading: false, error: action.error.message, success: false };
       });
   }
 });
 
-export const { selectJob, clearResults, resetJobUpdate } = slice.actions;
+export const { selectJob, clearResults, resetJobUpdate, setAccessToken, clearAuth } = slice.actions;
 export default slice.reducer;
-
