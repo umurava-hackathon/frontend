@@ -252,3 +252,8 @@ export async function apiChatWithShortlist(jobId: string, message: string, histo
   const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/chat`, { message, history });
   return res.data;
 }
+
+export async function apiChatWithDashboard(message: string, history: any[]): Promise<{ reply: string }> {
+  const res = await api.post("/ai/dashboard-chat", { message, history });
+  return res.data;
+}

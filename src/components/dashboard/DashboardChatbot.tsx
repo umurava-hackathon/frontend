@@ -1,38 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { apiChatWithShortlist } from "@/lib/api";
+import { apiChatWithDashboard } from "@/lib/api";
 import { AnimatePresence, motion } from "framer-motion";
 import classNames from "classnames";
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
-interface CandidateChatbotProps {
-  jobId: string;
-  jobTitle: string;
-  candidateCount: number;
-  hasResults: boolean;
-}
-
-const suggestionChips = [
-  "Who has the strongest Node.js skills?",
-  "Compare the top 2 candidates",
-  "Which candidates are immediately available?",
-  "Who has the most relevant projects?",
-  "Any red flags I should know about?"
-];
-
-export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }: CandidateChatbotProps) {
+export function DashboardChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const suggestionChips = [
+    "Summarize my recent activity",
+    "How are my latest jobs performing?",
+    "What should I focus on next?",
+  ];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,50 +26,52 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
     }
   }, [messages, isLoading]);
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [input]);
+
   const handleSend = async (text: string) => {
     if (!text.trim() || isLoading) return;
 
-    const userMsg: Message = { role: "user", content: text };
+    const userMsg = { role: "user" as const, content: text };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
 
     try {
-      const response = await apiChatWithShortlist(jobId, text, messages);
+      const response = await apiChatWithDashboard(text, messages);
       setMessages([...newMessages, { role: "assistant", content: response.reply }]);
     } catch (error) {
-      setMessages([...newMessages, { role: "assistant", content: "Something went wrong, please try again." }]);
+      setMessages([...newMessages, { role: "assistant", content: "I'm having trouble connecting to the intelligence engine. Please try again in a moment." }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatMessage = (content: string) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/^\u2022 (.*)$/gm, "<li>$1</li>")
-      .split('\n').map((line, i) => <p key={i} dangerouslySetInnerHTML={{ __html: line }} />);
+    return content.split("\n").map((line, i) => (
+      <React.Fragment key={i}>
+        {line}
+        <br />
+      </React.Fragment>
+    ));
   };
-
-  if (!hasResults) return null;
 
   return (
     <>
       {/* Floating Trigger Button */}
-      <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          setIsMinimized(false);
-        }}
-        className="fixed bottom-6 right-6 w-[56px] h-[56px] rounded-full bg-[#2B71F0] shadow-[0_8px_24px_rgba(43,113,240,0.3)] flex items-center justify-center text-white z-50 hover:bg-[#1A5CE0] hover:scale-110 transition-all duration-300 active:scale-95"
-      >
-        {isOpen ? (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-        ) : (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-        )}
-      </button>
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-8 right-8 w-[56px] h-[56px] rounded-full bg-[#0F1621] text-white shadow-2xl shadow-black/20 hover:scale-110 active:scale-95 transition-all duration-300 z-50 flex items-center justify-center group"
+        >
+          <svg className="w-6 h-6 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+        </button>
+      )}
 
       {/* Chat Panel */}
       <AnimatePresence>
@@ -94,32 +82,32 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
               opacity: 1, 
               y: 0, 
               scale: 1,
-              height: isMinimized ? "72px" : "580px"
+              height: isMinimized ? "72px" : "500px"
             }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-            className="fixed bottom-24 right-6 w-[calc(100vw-48px)] sm:w-[400px] bg-white border border-[#E8EAED] rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.12)] flex flex-col overflow-hidden z-50 max-h-[75vh] sm:max-h-none font-jakarta"
+            className="fixed bottom-8 right-8 w-[calc(100vw-64px)] sm:w-[380px] bg-white border border-[#E8EAED] rounded-[32px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden z-50 max-h-[70vh] sm:max-h-none font-jakarta"
           >
             {/* Header */}
             <div className="h-[72px] bg-white border-b border-[#F1F5F9] px-6 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-[#EEF4FF] flex items-center justify-center border border-[#DDE7FF]">
-                   <svg className="w-5 h-5 text-[#2B71F0]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                <div className="h-10 w-10 rounded-2xl bg-[#F8F9FB] flex items-center justify-center border border-[#E8EAED]">
+                   <svg className="w-5 h-5 text-[#0F1621]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[#0F1621] text-[15px] font-bold leading-tight">Evaluation Assistant</span>
+                  <span className="text-[#0F1621] text-[14px] font-bold uppercase tracking-widest leading-tight">Insight Engine</span>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-                    <span className="text-[#9BA5B4] text-[10px] font-bold uppercase tracking-widest">Active Insight</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#2B71F0]" />
+                    <span className="text-[#9BA5B4] text-[10px] font-bold uppercase tracking-wider">Connected</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => setIsMinimized(!isMinimized)} className="p-2 text-[#9BA5B4] hover:text-[#0F1621] hover:bg-[#F8F9FB] rounded-xl transition-all">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M18 12H6" /></svg>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M18 12H6" /></svg>
                 </button>
                 <button onClick={() => setIsOpen(false)} className="p-2 text-[#9BA5B4] hover:text-[#0F1621] hover:bg-[#F8F9FB] rounded-xl transition-all">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
             </div>
@@ -129,9 +117,9 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
                 {/* Messages Area */}
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar bg-white">
                   {/* Welcome Message */}
-                  <div className="self-start space-y-1 max-w-[85%]">
+                  <div className="self-start space-y-1 max-w-[90%]">
                     <div className="bg-[#F8F9FB] text-[#0F1621] rounded-2xl rounded-tl-none p-4 text-[14px] font-medium leading-relaxed border border-[#E8EAED]">
-                      Ready to analyze your shortlist for **{jobTitle}**. What specific details can I clarify for you?
+                      I've reviewed your recent recruitment signals. How can I help you understand your pipeline today?
                     </div>
                   </div>
 
@@ -141,7 +129,7 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
                         <button
                           key={i}
                           onClick={() => handleSend(chip)}
-                          className="bg-white border border-[#E8EAED] rounded-2xl px-5 py-3 text-[#2B71F0] text-[12px] font-bold hover:bg-[#F5F8FF] hover:border-[#2B71F0]/30 transition-all text-left animate-in fade-in slide-in-from-left-2 shadow-sm"
+                          className="bg-white border border-[#E8EAED] rounded-xl px-5 py-3 text-[#2B71F0] text-[12px] font-bold hover:bg-[#F5F8FF] hover:border-[#2B71F0]/30 transition-all text-left animate-in fade-in slide-in-from-left-2 shadow-sm"
                           style={{ animationDelay: `${150 + i * 50}ms` }}
                         >
                           {chip}
@@ -154,19 +142,19 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
                     <div
                       key={i}
                       className={classNames(
-                        "max-w-[85%] flex flex-col gap-1.5",
+                        "max-w-[90%] flex flex-col gap-1.5",
                         msg.role === "user" ? "self-end items-end" : "self-start items-start"
                       )}
                     >
                       <div
                         className={classNames(
-                          "p-4 text-[14px] font-medium leading-relaxed",
+                          "p-4 text-[14px] font-medium leading-relaxed shadow-sm",
                           msg.role === "user" 
-                            ? "bg-[#2B71F0] text-white rounded-2xl rounded-tr-none shadow-lg shadow-blue-500/10" 
+                            ? "bg-[#2B71F0] text-white rounded-2xl rounded-tr-none" 
                             : "bg-[#F8F9FB] text-[#0F1621] rounded-2xl rounded-tl-none border border-[#E8EAED]"
                         )}
                       >
-                        {msg.role === "assistant" ? formatMessage(msg.content) : msg.content}
+                        {formatMessage(msg.content)}
                       </div>
                     </div>
                   ))}
@@ -201,16 +189,16 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
                         }
                       }}
                       rows={1}
-                      placeholder="Send a message..."
+                      placeholder="Ask the assistant..."
                       className="flex-1 bg-transparent text-[14px] text-[#0F1621] font-medium outline-none resize-none max-h-32 py-1"
                       style={{ height: 'auto' }}
                     />
                     <button
                       disabled={!input.trim() || isLoading}
                       onClick={() => handleSend(input)}
-                      className="w-10 h-10 shrink-0 rounded-2xl bg-[#2B71F0] flex items-center justify-center text-white hover:bg-[#1A5CE0] disabled:bg-[#E8EAED] disabled:text-[#9BA5B4] transition-all active:scale-90 mb-0.5"
+                      className="w-10 h-10 shrink-0 rounded-2xl bg-[#0F1621] flex items-center justify-center text-white hover:bg-black disabled:bg-[#E8EAED] disabled:text-[#9BA5B4] transition-all active:scale-90 mb-0.5"
                     >
-                      <svg className="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                      <svg className="w-4 h-4 transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     </button>
                   </div>
                   <div className="mt-4 text-center">
