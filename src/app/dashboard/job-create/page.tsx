@@ -68,124 +68,136 @@ export default function JobCreatePage() {
   const weightSum = weights.skills + weights.experience + weights.education + weights.relevance;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-16">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-[#0F1621]">Create Recruitment Campaign</h1>
-        <p className="text-sm text-[#5A6474]">Set up your job requirements and AI scoring weights to begin screening.</p>
+    <div className="max-w-[1000px] mx-auto space-y-12 animate-in fade-in duration-700 pb-24">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-extrabold text-[#0F1621] tracking-tight leading-none">New Recruitment Campaign</h1>
+          <p className="text-[16px] text-[#5A6474] font-medium max-w-xl">Define your ideal candidate profile and let AI handle the heavy lifting.</p>
+        </div>
       </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
+      <form className="space-y-10" onSubmit={handleSubmit}>
         {/* Basic Info */}
-        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest mb-2">
-            <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
-            Basic Information
-          </div>
+        <div className="relative bg-white border border-[#E8EAED] rounded-[32px] p-10 shadow-sm space-y-10 overflow-hidden">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 rounded-r-full h-[30%] bg-[#2B71F0]" />
           
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[13px] font-semibold text-[#5A6474]">Job Title</label>
+          <div className="space-y-8 pl-4">
+            <div className="space-y-2.5">
+              <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Campaign Title</label>
               <input
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Senior Fullstack Engineer"
-                className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                placeholder="e.g. Senior Fullstack Architect"
+                className="w-full rounded-2xl border-2 border-[#E8EAED] bg-white px-6 py-4 text-[16px] font-bold text-[#0F1621] focus-ring transition-all placeholder:text-[#9BA5B4]"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Department</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Department</label>
                 <input
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g. Engineering"
-                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                  placeholder="Engineering"
+                  className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] px-5 py-3 text-[14px] font-bold text-[#0F1621] focus-ring transition-all"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Location</label>
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Location</label>
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Remote / Kigali"
-                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                  placeholder="Remote / Kigali"
+                  className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] px-5 py-3 text-[14px] font-bold text-[#0F1621] focus-ring transition-all"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Employment Type</label>
-                <select
-                  value={employmentType}
-                  onChange={(e) => setEmploymentType(e.target.value)}
-                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
-                >
-                  <option>Full-time</option>
-                  <option>Part-time</option>
-                  <option>Contract</option>
-                </select>
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Contract</label>
+                <div className="relative group">
+                  <select
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value)}
+                    className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] px-5 py-3 text-[14px] font-black text-[#0F1621] focus-ring transition-all appearance-none cursor-pointer"
+                  >
+                    <option>Full-time</option>
+                    <option>Part-time</option>
+                    <option>Contract</option>
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#9BA5B4] group-focus-within:text-[#2B71F0] transition-colors">
+                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Job Description</label>
-                <JDGenerator onSelect={(desc) => setDescription(desc)} />
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1 px-1">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Job Description</label>
+                <div className="text-[11px] text-[#9BA5B4] font-bold uppercase tracking-widest italic opacity-70">Define the core mission and scope of this role</div>
               </div>
-              <textarea
-                required
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Outline the core responsibilities and expectations..."
-                className="w-full min-h-[160px] rounded-lg border border-[#E8EAED] bg-white px-4 py-3 text-sm focus-ring transition-all leading-relaxed"
-              />
+              
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-end">
+                   <JDGenerator onSelect={(desc) => setDescription(desc)} />
+                </div>
+                <textarea
+                  required
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Outline core responsibilities, culture, and project expectations..."
+                  className="w-full min-h-[220px] rounded-2xl border border-[#E8EAED] bg-white px-6 py-5 text-[15px] focus-ring transition-all leading-relaxed font-medium shadow-inner"
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Requirements */}
-        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest mb-2">
-            <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
-            Candidate Requirements
-          </div>
+        <div className="relative bg-white border border-[#E8EAED] rounded-[32px] p-10 shadow-sm space-y-10 overflow-hidden">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 rounded-r-full h-[30%] bg-[#2B71F0]" />
 
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-[13px] font-semibold text-[#5A6474]">Core Skills (Press Enter to add)</label>
-              <div className="flex flex-wrap gap-2 mb-3">
+          <div className="space-y-8 pl-4">
+            <div className="space-y-4">
+              <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Core Required Skills</label>
+              <div className="flex flex-wrap gap-2.5">
                 {skills.map((s) => (
-                  <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#EEF4FF] text-[#2B71F0] text-[12px] font-bold border border-[#EEF4FF]">
+                  <span key={s} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F5F8FF] text-[#2B71F0] text-[13px] font-black border border-[#EEF4FF] animate-in zoom-in-95 duration-200">
                     {s}
-                    <button type="button" onClick={() => removeSkill(s)} className="hover:text-[#1A5CE0]">&times;</button>
+                    <button type="button" onClick={() => removeSkill(s)} className="text-[#9BA5B4] hover:text-[#DC2626] transition-colors"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path d="M6 18L18 6M6 6l12 12" /></svg></button>
                   </span>
                 ))}
               </div>
-              <input
-                value={skillsInput}
-                onChange={(e) => setSkillsInput(e.target.value)}
-                onKeyDown={addSkill}
-                placeholder="Type a skill and hit enter..."
-                className="w-full rounded-lg border border-[#E8EAED] bg-[#F8F9FC] px-4 py-2.5 text-sm focus-ring transition-all"
-              />
+              <div className="relative group max-w-md">
+                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9BA5B4] group-focus-within:text-[#2B71F0] transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M12 4v16m8-8H4" /></svg>
+                 <input
+                   value={skillsInput}
+                   onChange={(e) => setSkillsInput(e.target.value)}
+                   onKeyDown={addSkill}
+                   placeholder="Type skill and press Enter..."
+                   className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] pl-11 pr-5 py-3 text-[14px] font-bold text-[#0F1621] focus-ring transition-all"
+                 />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Minimum Years of Experience</label>
-                <input
-                  type="number"
-                  value={experienceYears}
-                  onChange={(e) => setExperienceYears(Number(e.target.value))}
-                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-4">
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Min. Years Experience</label>
+                <div className="relative w-48">
+                   <input
+                     type="number"
+                     value={experienceYears}
+                     onChange={(e) => setExperienceYears(Number(e.target.value))}
+                     className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] px-5 py-3 text-[15px] font-black text-[#0F1621] focus-ring transition-all"
+                   />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[13px] font-semibold text-[#5A6474]">Education Requirement</label>
+              <div className="space-y-2.5">
+                <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Academic Level</label>
                 <input
                   value={educationRequirement}
                   onChange={(e) => setEducationRequirement(e.target.value)}
-                  className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm focus-ring transition-all"
+                  className="w-full rounded-xl border border-[#E8EAED] bg-[#F8F9FB] px-5 py-3 text-[14px] font-bold text-[#0F1621] focus-ring transition-all"
                 />
               </div>
             </div>
@@ -193,29 +205,31 @@ export default function JobCreatePage() {
         </div>
 
         {/* AI Weights */}
-        <div className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[11px] font-bold text-[#9BA5B4] uppercase tracking-widest">
-              <span className="h-4 w-1 bg-[#2B71F0] rounded-full" />
-              AI Scoring Weights
+        <div className="relative bg-white border border-[#E8EAED] rounded-[32px] p-10 shadow-sm space-y-10 overflow-hidden">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 rounded-r-full h-[30%] bg-[#2B71F0]" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pl-4 border-b border-[#F5F6FA] pb-6">
+            <div className="space-y-1">
+               <h3 className="text-[13px] font-black text-[#0F1621] uppercase tracking-[0.2em]">AI Intelligence Tuning</h3>
+               <p className="text-[12px] text-[#9BA5B4] font-bold uppercase tracking-widest">Adjust weight distribution for this specific role</p>
             </div>
-            <div className={`text-[11px] font-bold px-3 py-1 rounded-full border ${weightSum === 100 ? "bg-[#F0FDF4] text-[#10B981] border-[#10B981]" : "bg-red-50 text-red-600 border-red-100"}`}>
-              Total: {weightSum}%
+            <div className={`px-5 py-2 rounded-2xl text-[13px] font-black border-2 transition-all ${weightSum === 100 ? "bg-[#F0FDF4] text-[#10B981] border-[#10B981]/20 shadow-lg shadow-emerald-500/10" : "bg-red-50 text-red-600 border-red-100 animate-pulse"}`}>
+              Configuration: {weightSum}%
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pl-4">
             {(["skills", "experience", "education", "relevance"] as const).map((w) => (
-              <div key={w} className="space-y-2">
-                <label className="text-[12px] font-bold text-[#5A6474] capitalize">{w}</label>
+              <div key={w} className="space-y-3">
+                <label className="text-[11px] font-black text-[#5A6474] uppercase tracking-[0.15em] ml-1">{w}</label>
                 <div className="relative">
                   <input
                     type="number"
                     value={weights[w]}
                     onChange={(e) => setWeights({ ...weights, [w]: Number(e.target.value) })}
-                    className="w-full rounded-lg border border-[#E8EAED] bg-white px-4 py-2.5 text-sm font-bold text-[#0F1621] focus-ring transition-all"
+                    className="w-full rounded-2xl border-2 border-[#E8EAED] bg-white px-5 py-3.5 text-[18px] font-black text-[#0F1621] focus:border-[#2B71F0] outline-none transition-all shadow-sm"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#9BA5B4]">%</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-black text-[#9BA5B4]">%</span>
                 </div>
               </div>
             ))}
@@ -223,25 +237,25 @@ export default function JobCreatePage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium animate-shake">
+          <div className="p-6 rounded-[24px] bg-red-50 border border-red-100 text-red-600 text-[14px] font-black uppercase tracking-widest text-center shadow-sm animate-shake">
             {error}
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-6 pt-6 px-4">
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-8 py-3 text-sm font-bold text-[#5A6474] hover:text-[#0F1621] transition-colors"
+            className="w-full sm:w-auto px-10 py-4 text-[14px] font-black text-[#9BA5B4] uppercase tracking-[0.15em] hover:text-[#0F1621] transition-all"
           >
-            Cancel
+            Cancel Session
           </button>
           <button
             type="submit"
             disabled={loading || weightSum !== 100}
-            className="bg-[#2B71F0] hover:bg-[#1A5CE0] text-white px-10 py-3 rounded-xl font-bold text-sm shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+            className="w-full sm:w-auto bg-[#2B71F0] text-white px-14 py-4 rounded-[20px] font-black text-[15px] uppercase tracking-[0.1em] shadow-2xl shadow-blue-500/30 hover:bg-[#1A5CE0] hover:scale-105 transition-all disabled:opacity-30 disabled:hover:scale-100 active:scale-95"
           >
-            {loading ? "Creating Campaign..." : "Create Campaign"}
+            {loading ? "Initializing..." : "Launch Campaign"}
           </button>
         </div>
       </form>

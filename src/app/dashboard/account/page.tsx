@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkUpdateAccountProfile } from "@/store/slices/dashboardSlice";
 import { useRouter } from "next/navigation";
+import { AlertDialog } from "@/components/ui/Modal";
 
 const toTitleCase = (str: string) => {
   if (!str) return "";
@@ -23,6 +24,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showReauthAlert, setShowReauthAlert] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,8 +49,7 @@ export default function ProfilePage() {
       const resAction = await dispatch(thunkUpdateAccountProfile(formData) as any);
       if (thunkUpdateAccountProfile.fulfilled.match(resAction)) {
         if (resAction.payload.requiresReauth) {
-           alert("Email changed. Please log in again with your new email.");
-           router.push("/login");
+           setShowReauthAlert(true);
            return;
         }
         setSuccess(true);
@@ -60,6 +62,11 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleReauthConfirm = () => {
+    setShowReauthAlert(false);
+    router.push("/login");
   };
 
   const handleCancel = () => {
@@ -75,6 +82,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      {/* ... existing profile JSX ... */}
       <div className="space-y-1">
         <h2 className="text-xl font-bold text-[#0F1621]">Your profile</h2>
         <p className="text-sm text-[#5A6474]">Manage your account identification and contact details.</p>
@@ -176,6 +184,17 @@ export default function ProfilePage() {
           </button>
         </div>
       </form>
+
+      <AlertDialog
+        isOpen={showReauthAlert}
+        onClose={handleReauthConfirm}
+        onConfirm={handleReauthConfirm}
+        title="Email Changed"
+        message="Your email has been updated successfully. For security reasons, please log in again with your new email address."
+        confirmText="Log in"
+        showCancel={false}
+        variant="info"
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
 } from "@/store/slices/dashboardSlice";
 import { UAParser } from "ua-parser-js";
 import { formatDistanceToNow } from "date-fns";
+import { AlertDialog } from "@/components/ui/Modal";
 
 const formatIP = (ip: string) =>
   ip === "::1" || ip === "127.0.0.1" || ip === "::ffff:127.0.0.1"
@@ -21,14 +22,21 @@ export default function SessionsPage() {
   const [isConfirmingAll, setIsConfirmingAll] = useState(false);
   const [revokeAllLoading, setRevokeAllLoading] = useState(false);
   const [revokeAllSuccess, setRevokeAllSuccess] = useState(false);
+  
+  const [sessionToRevoke, setSessionToRevoke] = useState<string | null>(null);
 
   useEffect(() => {
     void dispatch(thunkFetchAccountSessions() as any);
   }, [dispatch]);
 
-  const handleRevoke = async (id: string) => {
-    if (confirm("Sign out this device?")) {
-      await dispatch(thunkRevokeSession(id) as any);
+  const handleRevokeClick = (id: string) => {
+    setSessionToRevoke(id);
+  };
+
+  const confirmRevoke = async () => {
+    if (sessionToRevoke) {
+      await dispatch(thunkRevokeSession(sessionToRevoke) as any);
+      setSessionToRevoke(null);
     }
   };
 
@@ -97,7 +105,7 @@ export default function SessionsPage() {
               </span>
             ) : (
               <button 
-                onClick={() => handleRevoke(session.sessionId)}
+                onClick={() => handleRevokeClick(session.sessionId)}
                 className="px-4 py-1.5 border border-red-200 text-red-600 rounded-lg text-[12px] font-bold hover:bg-red-50 transition-colors shrink-0"
               >
                 Revoke
@@ -105,7 +113,7 @@ export default function SessionsPage() {
             )}
           </div>
         ))}
-
+        {/* ... existing count indicator ... */}
         {otherSessionsCount === 0 && (
           <div className="bg-[#F8F9FC] border border-[#E8EAED] rounded-xl p-4 flex items-center gap-3 text-[#5A6474]">
             <svg className="h-4 w-4 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
@@ -165,6 +173,16 @@ export default function SessionsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog
+        isOpen={sessionToRevoke !== null}
+        onClose={() => setSessionToRevoke(null)}
+        onConfirm={confirmRevoke}
+        title="Sign out device"
+        message="Are you sure you want to sign out this device? You will need to log in again on that device."
+        confirmText="Sign out"
+        variant="danger"
+      />
     </div>
   );
 }

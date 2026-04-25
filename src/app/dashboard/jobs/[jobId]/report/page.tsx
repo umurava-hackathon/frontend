@@ -207,10 +207,13 @@ export default function ReportPage() {
               const breakdown= c.scoreBreakdown ?? {};
 
               return (
-                <div key={c.applicantId ?? idx} className="break-inside-avoid rounded-2xl border border-neutral-200 bg-white overflow-hidden">
+                <div key={c.applicantId ?? idx} className="relative break-inside-avoid rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-sm">
+                  {/* Internal Accent Bar */}
+                  <div className="absolute left-0 top-[20%] bottom-[20%] w-1.5 rounded-full bg-[#2B71F0]/40 z-10" />
+                  
                   {/* Header row */}
-                  <div className="flex items-center justify-between px-5 py-4 bg-neutral-50 border-b border-neutral-100">
-                    <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center justify-between px-6 py-4 bg-neutral-50 border-b border-neutral-100 relative">
+                    <div className="flex items-center gap-4 min-w-0 pl-2">
                       <div className="h-8 w-8 rounded-full bg-neutral-900 text-white text-[13px] font-bold flex items-center justify-center shrink-0">
                         {c.rank ?? idx + 1}
                       </div>

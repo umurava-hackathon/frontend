@@ -116,8 +116,11 @@ export default function ComparePage() {
       {selectedCandidates.length === 2 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {selectedCandidates.map((c: any, idx) => (
-            <div key={c.applicantId} className="bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm animate-in zoom-in-95 duration-300">
-              <div className="flex items-start justify-between gap-4 border-b border-[#F5F6FA] pb-6">
+            <div key={c.applicantId} className="relative bg-white border border-[#E8EAED] rounded-xl p-8 shadow-sm animate-in zoom-in-95 duration-300 overflow-hidden">
+              {/* Internal Accent Bar */}
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 rounded-full h-[30%] bg-[#2B71F0]" />
+              
+              <div className="flex items-start justify-between gap-4 border-b border-[#F5F6FA] pb-6 pl-2">
                 <div className="space-y-1">
                   <div className="text-xl font-bold text-[#0F1621]">{getDisplayName(c)}</div>
                   <div className="text-[12px] font-bold text-[#9BA5B4] uppercase tracking-widest">

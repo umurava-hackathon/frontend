@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkRegister } from "@/store/slices/dashboardSlice";
+import { AlertDialog } from "@/components/ui/Modal";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export default function RegisterPage() {
     confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   const loading = useAppSelector((state) => state.dashboard.auth.loading);
   const error = useAppSelector((state) => state.dashboard.auth.error);
   const dispatch = useAppDispatch();
@@ -39,7 +41,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setShowAlert(true);
       return;
     }
     const result = await dispatch(thunkRegister(formData) as any);
@@ -64,6 +66,7 @@ export default function RegisterPage() {
         </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+          {/* ... existing form fields ... */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-neutral-700">First name</label>
@@ -190,6 +193,16 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
+
+      <AlertDialog
+        isOpen={showAlert}
+        onClose={() => setShowAlert(false)}
+        title="Registration Error"
+        message="Passwords do not match. Please try again."
+        confirmText="OK"
+        showCancel={false}
+        variant="warning"
+      />
     </main>
   );
 }
