@@ -9,6 +9,7 @@ import {
   thunkIngestUmuravaProfiles,
   thunkUploadResume
 } from "@/store/slices/dashboardSlice";
+import { apiGetParseStatus, apiIngestCsv } from "@/lib/api";
 
 type TabKey = "umurava" | "external";
 type UmuravaInputMode = "paste" | "upload";
@@ -21,6 +22,7 @@ interface UmuravaProfile {
   headline: string;
   bio?: string;
   location: string;
+  _resumeUrl?: string; // Internal field for ingestion
   skills: {
     name: string;
     level: "Beginner" | "Intermediate" | "Advanced" | "Expert";
@@ -78,6 +80,7 @@ const SIMPLE_MAPPING_FIELDS = [
     { key: "email", label: "Email" },
     { key: "headline", label: "Headline" },
     { key: "location", label: "Location" },
+    { key: "resumeUrl", label: "Resume URL" },
     { key: "bio", label: "Bio (optional)" }
   ]},
   { section: "SKILLS (accept comma-separated string)", fields: [
@@ -112,6 +115,7 @@ interface DetailedMapping {
   email: string;
   headline: string;
   location: string;
+  resumeUrl: string;
   bio: string;
   skills: { name: string; level: string; years: string }[];
   experience: { company: string; role: string; start: string; end: string; description: string; technologies: string }[];
@@ -225,13 +229,34 @@ export default function IngestPage() {
   const [loadingA, setLoadingA] = useState(false);
   const [isIngested, setIsIngested] = useState(false);
 
-  // --- External CSV + PDF State ---
+  // --- External CSV + Parsing State ---
+  const [parseStatus, setParseStatus] = useState<{ total: number; resumeParsed: number; csvOnly: number; parseErrors: number; processing: boolean } | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+
+  useEffect(() => {
+    let interval: any;
+    if (isPolling && jobId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await apiGetParseStatus(jobId);
+          setParseStatus(res.data);
+          if (!res.data.processing) {
+            setIsPolling(false);
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isPolling, jobId]);
+
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvFormat, setCsvFormat] = useState<CsvFormat>("simple");
   
   const [simpleMapping, setSimpleMapping] = useState<SimpleMapping>({
-    fullName: "", email: "", headline: "", location: "", bio: "",
+    fullName: "", email: "", headline: "", location: "", resumeUrl: "", bio: "",
     skillsList: "", skillLevels: "", skillYears: "",
     currentCompany: "", currentRole: "", yearsExperience: "", experienceSummary: "", technologies: "",
     institution: "", degree: "", fieldOfStudy: "",
@@ -239,7 +264,7 @@ export default function IngestPage() {
   });
 
   const [detailedMapping, setDetailedMapping] = useState<DetailedMapping>({
-    fullName: "", email: "", headline: "", location: "", bio: "",
+    fullName: "", email: "", headline: "", location: "", resumeUrl: "", bio: "",
     skills: [{ name: "", level: "", years: "" }],
     experience: [{ company: "", role: "", start: "", end: "", description: "", technologies: "" }],
     education: [{ institution: "", degree: "", field: "", start: "", end: "" }],
@@ -403,7 +428,7 @@ export default function IngestPage() {
       email: row[mapping.email] || "",
       headline: row[mapping.headline] || "",
       location: row[mapping.location] || "",
-      bio: row[mapping.bio] || undefined,
+      bio: row[mapping.bio] || undefined, _resumeUrl: row[mapping.resumeUrl] || "",
       skills: skills.length > 0 ? skills : [{ name: "Not specified", level: "Intermediate", yearsOfExperience: 0 }],
       experience: [{
         company: row[mapping.currentCompany] || "Not specified",
@@ -479,7 +504,7 @@ export default function IngestPage() {
       email: row[mapping.email] || "",
       headline: row[mapping.headline] || "",
       location: row[mapping.location] || "",
-      bio: row[mapping.bio] || undefined,
+      bio: row[mapping.bio] || undefined, _resumeUrl: row[mapping.resumeUrl] || "",
       skills: skills.length > 0 ? skills : [{ name: "Not specified", level: "Intermediate", yearsOfExperience: 0 }],
       experience: experience.length > 0 ? experience : [{
         company: "Not specified",
@@ -553,18 +578,21 @@ export default function IngestPage() {
   }
 
   async function submitCsvIngestion() {
-    if (!jobId || validatedCsvProfiles.length === 0) return;
+    if (!jobId || !csvFile) return;
     setLoadingB(true);
     setIngestErrorB(null);
     try {
-      const resAction = await dispatch(thunkIngestUmuravaProfiles({ jobId, profiles: validatedCsvProfiles }) as any);
-      if (thunkIngestUmuravaProfiles.fulfilled.match(resAction)) {
-        setIngestResultB(resAction.payload.data ?? resAction.payload);
-        setIsCsvIngested(true);
-        void dispatch(thunkFetchApplicants(jobId) as any);
-      } else {
-        throw new Error(resAction.error.message || "CSV ingestion failed");
+      const mapping = csvFormat === "simple" ? simpleMapping : detailedMapping;
+      const res = await apiIngestCsv(jobId, csvFile, mapping);
+      
+      setIngestResultB(res.data || res);
+      setIsCsvIngested(true);
+      
+      if (res.data?.resumeProcessing) {
+        setIsPolling(true);
       }
+      
+      void dispatch(thunkFetchApplicants(jobId) as any);
     } catch (err: any) {
       setIngestErrorB(err?.message ?? "CSV ingestion failed");
     } finally {
@@ -909,7 +937,19 @@ export default function IngestPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
                               {section.fields.map((f) => (
                                 <label key={f.key} className="block space-y-1.5">
-                                  <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
+                                    {f.key === "resumeUrl" && (
+                                      <div className="group relative">
+                                        <svg className="h-3.5 w-3.5 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-neutral-800 text-white text-[11px] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl leading-relaxed">
+                                          When a Resume URL is provided, our AI automatically downloads and parses each candidate's resume, enriching their profile with detailed skills, experience, and project data. Candidates without a resume URL are scored on CSV fields only.
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                   <select
                                     value={simpleMapping[f.key]}
                                     onChange={(e) => setSimpleMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -920,6 +960,11 @@ export default function IngestPage() {
                                       <option key={h} value={h}>{h}</option>
                                     ))}
                                   </select>
+                                  {f.key === "resumeUrl" && (
+                                    <p className="text-[12px] text-neutral-500 italic px-0.5">
+                                      Supports Google Drive, Dropbox, and direct PDF links. Resumes are fetched and parsed automatically — no manual upload needed.
+                                    </p>
+                                  )}
                                 </label>
                               ))}
                             </div>
@@ -942,10 +987,23 @@ export default function IngestPage() {
                               { key: "email", label: "Email" },
                               { key: "headline", label: "Headline" },
                               { key: "location", label: "Location" },
+                              { key: "resumeUrl", label: "Resume URL" },
                               { key: "bio", label: "Bio" }
                             ].map((f) => (
                               <label key={f.key} className="block space-y-1.5">
-                                <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="text-[13px] font-medium text-neutral-700">{f.label}</div>
+                                  {f.key === "resumeUrl" && (
+                                    <div className="group relative">
+                                      <svg className="h-3.5 w-3.5 text-neutral-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-neutral-800 text-white text-[11px] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl leading-relaxed">
+                                        When a Resume URL is provided, our AI automatically downloads and parses each candidate's resume, enriching their profile with detailed skills, experience, and project data. Candidates without a resume URL are scored on CSV fields only.
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                                 <select
                                   value={(detailedMapping as any)[f.key]}
                                   onChange={(e) => setDetailedMapping(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -956,6 +1014,11 @@ export default function IngestPage() {
                                     <option key={h} value={h}>{h}</option>
                                   ))}
                                 </select>
+                                {f.key === "resumeUrl" && (
+                                  <p className="text-[12px] text-neutral-500 italic px-0.5">
+                                    Supports Google Drive, Dropbox, and direct PDF links. Resumes are fetched and parsed automatically — no manual upload needed.
+                                  </p>
+                                )}
                               </label>
                             ))}
                           </div>
@@ -1520,22 +1583,87 @@ export default function IngestPage() {
               )}
 
               {ingestResultB && (
-                <div className="p-6 rounded-xl bg-successLight border border-success/20 space-y-4 animate-fade-in-up shadow-sm">
-                  <div className="flex items-center gap-3 text-success">
-                    <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                <div className="space-y-6 animate-fade-in-up">
+                  {ingestResultB.resumeProcessing || (parseStatus && parseStatus.processing) ? (
+                    <div className="rounded-xl border border-neutral-200 bg-white p-6 sm:p-8 space-y-6 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-successLight flex items-center justify-center">
+                            <svg className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                          <span className="text-[15px] font-bold text-neutral-800">{ingestResultB.rowsCreated} profiles saved</span>
+                        </div>
+                        <div className="h-2 w-2 rounded-full bg-success animate-pulse"></div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between text-sm font-medium">
+                          <span className="text-neutral-600">Parsing resumes in background...</span>
+                          <span className="text-neutral-800">{parseStatus?.resumeParsed ?? 0} / {parseStatus?.total ?? ingestResultB.rowsCreated}</span>
+                        </div>
+                        
+                        <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary-500 transition-all duration-500 ease-out" 
+                            style={{ width: `${((parseStatus?.resumeParsed ?? 0) / (parseStatus?.total ?? ingestResultB.rowsCreated)) * 100}%` }}
+                          ></div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 text-xs font-medium text-neutral-500">
+                          <span>{(parseStatus?.resumeParsed ?? 0)} resumes parsed</span>
+                          <span className="text-neutral-300">•</span>
+                          <span>{(parseStatus?.total ?? ingestResultB.rowsCreated) - (parseStatus?.resumeParsed ?? 0)} pending</span>
+                          {parseStatus?.parseErrors ? (
+                            <>
+                              <span className="text-neutral-300">•</span>
+                              <span className="text-danger">{parseStatus.parseErrors} errors</span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-4 pt-2 border-t border-neutral-100 mt-6 pt-6">
+                        <button
+                          onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
+                          className="w-full sm:w-auto px-8 py-3 bg-primary-500 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-primary-600 transition-all"
+                        >
+                          Run screening now
+                        </button>
+                        <button
+                          disabled={parseStatus?.processing !== false}
+                          onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/shortlist`)}
+                          className="w-full sm:w-auto px-8 py-3 bg-white border border-neutral-200 text-neutral-600 rounded-lg text-sm font-bold hover:bg-neutral-50 disabled:bg-neutral-50 disabled:text-neutral-400 transition-all"
+                        >
+                          {parseStatus?.processing === false ? "View candidates" : "Wait for all resumes"}
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-sm font-semibold">Successfully ingested {validatedCsvProfiles.length} candidates from CSV.</span>
-                  </div>
-                  <button
-                    onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
-                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-neutral-800 px-6 py-3 rounded-lg hover:bg-neutral-900 transition-colors shadow-sm focus-ring"
-                  >
-                    Go to screening
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                  </button>
+                  ) : (
+                    <div className="p-6 rounded-xl bg-successLight border border-success/20 space-y-4 shadow-sm">
+                      <div className="flex items-center gap-3 text-success">
+                        <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-semibold">
+                          {parseStatus 
+                            ? `All ${parseStatus.total} profiles ready. ${parseStatus.resumeParsed} resume-enriched, ${parseStatus.csvOnly} CSV-only.`
+                            : `Successfully ingested ${ingestResultB.rowsCreated} candidates. ${ingestResultB.resumeEnriched || 0} resume-enriched.`
+                          }
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/screen`)}
+                        className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white bg-neutral-800 px-6 py-3 rounded-lg hover:bg-neutral-900 transition-colors shadow-sm focus-ring"
+                      >
+                        Go to screening
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1545,71 +1673,50 @@ export default function IngestPage() {
                 </div>
               )}
 
-              <div className="rounded-xl border border-neutral-200 bg-white p-6 sm:p-8 space-y-8 shadow-sm">
-                <div className="space-y-1">
-                  <div className="text-sm font-semibold text-neutral-800">3) Upload resume PDF (optional)</div>
-                  <div className="text-xs text-neutral-400">
-                    Attach a PDF to an existing applicant for detailed AI parsing.
+              {csvFile && (
+                <div className="rounded-xl border border-neutral-200 bg-[#F8FAFC] p-6 sm:p-8 space-y-6 shadow-sm">
+                  <div className="text-[15px] font-bold text-neutral-800">How resume parsing works</div>
+                  
+                  <div className="space-y-6">
+                    <div className="flex gap-4">
+                      <div className="h-6 w-6 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-[13px] font-bold text-neutral-700">Candidates with a Resume URL</div>
+                        <p className="text-[13px] text-neutral-500 leading-relaxed">
+                          AI fetches and parses each PDF automatically. Skills, experience, and projects are extracted and merged into the candidate profile.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="h-6 w-6 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div className="h-2 w-2 rounded-full bg-neutral-400"></div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-[13px] font-bold text-neutral-700">Candidates without a Resume URL</div>
+                        <p className="text-[13px] text-neutral-500 leading-relaxed">
+                          Scored on CSV fields only (skills list, experience summary, education). AI scoring may be less detailed for these candidates.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 gap-8">
-                  <label className="block space-y-1.5">
-                    <div className="text-[13px] font-medium text-neutral-700">Target applicant</div>
-                    <select
-                      className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm focus-ring transition-card"
-                      value={selectedApplicantId}
-                      onChange={(e) => setSelectedApplicantId(e.target.value)}
-                    >
-                      <option value="">Choose an applicant...</option>
-                      {(applicantsState ?? []).map((a: any) => (
-                        <option key={a.id} value={a.id}>{a.fullName ?? a.id}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <div
-                    className={`rounded-xl border-2 border-dashed transition-card p-12 text-center cursor-pointer min-h-[160px] flex items-center justify-center ${pdfFile ? "border-primary-500 bg-primary-50" : "border-neutral-300 bg-white hover:border-primary-500 hover:bg-primary-50"}`}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const f = e.dataTransfer.files?.[0];
-                      if (f) setPdfFile(f);
-                    }}
-                    onClick={() => document.getElementById("pdf-input")?.click()}
-                  >
-                    <input
-                      id="pdf-input"
-                      className="hidden"
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) setPdfFile(f);
-                      }}
-                    />
-                    <div className="text-sm font-medium text-neutral-700">
-                      {pdfFile ? (
-                        <span>Selected: <span className="text-primary-500 font-bold">{pdfFile.name}</span></span>
-                      ) : (
-                        <span>Drop resume PDF here or <span className="text-primary-500 underline">browse</span></span>
-                      )}
+                  <div className="pt-4 border-t border-neutral-200">
+                    <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Supported Formats</div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px] text-neutral-600 font-medium">
+                      <span>Google Drive</span>
+                      <span className="text-neutral-300">•</span>
+                      <span>Dropbox</span>
+                      <span className="text-neutral-300">•</span>
+                      <span>Direct PDF URL</span>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-6 pt-2">
-                  <button
-                    type="button"
-                    disabled={!pdfFile || !selectedApplicantId}
-                    onClick={() => void submitResumeUpload()}
-                    className="px-8 py-3.5 bg-neutral-800 text-white rounded-lg text-sm font-medium hover:bg-neutral-900 disabled:bg-neutral-300 transition-all shadow-sm"
-                  >
-                    Upload and parse PDF
-                  </button>
-                  {uploadStatus ? <div className="text-xs font-semibold text-primary-600 italic">{uploadStatus}</div> : null}
-                </div>
-              </div>
+              )}
             </div>
           )}
         </div>

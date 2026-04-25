@@ -227,8 +227,13 @@ export default function ShortlistPage() {
                 {results?.status ?? "unknown"}
               </span>
             </div>
-            <div className="text-[13px] font-medium text-neutral-500">
-              Showing Top <span className="text-neutral-800 font-bold">{results?.topN ?? "?"}</span> candidates.
+            <div className="flex flex-col items-center sm:items-end gap-1">
+              <div className="text-[13px] font-medium text-neutral-500">
+                Showing Top <span className="text-neutral-800 font-bold">{results?.topN ?? "?"}</span> candidates.
+              </div>
+              <div className="text-[12px] text-neutral-400 font-medium">
+                {candidateCards.length} candidates • {candidateCards.filter((c: any) => c._resumeParsed).length} resume-enriched • {candidateCards.filter((c: any) => !c._resumeParsed).length} CSV-only
+              </div>
             </div>
           </div>
         )}
@@ -279,7 +284,42 @@ export default function ShortlistPage() {
                       {c.rank}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-[17px] font-semibold text-neutral-800 truncate">{c.candidateName ?? `Candidate ${c.applicantId.slice(-4)}`}</h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-[17px] font-semibold text-neutral-800 truncate">{c.candidateName ?? `Candidate ${c.applicantId.slice(-4)}`}</h3>
+                        
+                        {/* Data Quality Badge */}
+                        <div className="group relative">
+                          {c._resumeParsed ? (
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] text-[10px] font-semibold">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Resume parsed
+                            </div>
+                          ) : c._resumeParseError ? (
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FEF9C3] text-[#854D0E] border border-[#FDE047] text-[10px] font-semibold">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              Resume unavailable
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0] text-[10px] font-semibold">
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              CSV profile
+                            </div>
+                          )}
+                          
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-neutral-800 text-white text-[10px] rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                            {c._resumeParsed ? "Profile enriched from parsed resume. Skills, experience and projects extracted by AI." : 
+                             c._resumeParseError ? "Resume URL was provided but could not be fetched or parsed. Scored on CSV fields only." : 
+                             "Profile built from CSV fields only. AI scoring may be less detailed without a resume."}
+                          </div>
+                        </div>
+                      </div>
                       <p className="text-[13px] text-neutral-500 font-medium truncate mt-0.5">{c.candidateHeadline || "No headline provided"}</p>
                     </div>
                   </div>

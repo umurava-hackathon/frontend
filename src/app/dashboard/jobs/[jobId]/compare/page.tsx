@@ -35,6 +35,13 @@ export default function ComparePage() {
     return selected.map((id) => map.get(id)).filter(Boolean);
   }, [shortlist, selected]);
 
+  const isMixedSource = useMemo(() => {
+    if (selectedCandidates.length !== 2) return false;
+    const c1 = selectedCandidates[0];
+    const c2 = selectedCandidates[1];
+    return !!c1._resumeParsed !== !!c2._resumeParsed;
+  }, [selectedCandidates]);
+
   function toggleCandidate(id: string) {
     setSelected((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
@@ -126,6 +133,19 @@ export default function ComparePage() {
         )}
       </div>
 
+      {isMixedSource && (
+        <div className="mx-4 sm:mx-0 p-4 bg-[#FEF9C3] border border-[#FDE047] rounded-lg animate-fade-in-up">
+          <div className="flex items-center gap-3 text-[#D97706]">
+            <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-[13px] font-medium leading-relaxed">
+              Note: Candidate #1 was scored from a parsed resume while Candidate #2 is CSV-only. Score dimensions may not be directly comparable.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className={classNames(
         "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all duration-350 ease-out",
         selectedCandidates.length === 0 ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
@@ -138,7 +158,23 @@ export default function ComparePage() {
                   Selected Candidate #{idx + 1}
                 </div>
                 <div className="text-xl font-bold text-neutral-800">{c.fullName || `Candidate ${c.applicantId.slice(-4)}`}</div>
-                <div className="text-[13px] text-neutral-500 font-medium">{c.candidateHeadline || "No headline provided"}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-[13px] text-neutral-500 font-medium">{c.candidateHeadline || "No headline provided"}</div>
+                  {/* Data Quality Badge */}
+                  {c._resumeParsed ? (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] border border-[#86EFAC] text-[9px] font-bold uppercase tracking-wider">
+                      Resume parsed
+                    </div>
+                  ) : c._resumeParseError ? (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FEF9C3] text-[#854D0E] border border-[#FDE047] text-[9px] font-bold uppercase tracking-wider">
+                      Resume unavailable
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0] text-[9px] font-bold uppercase tracking-wider">
+                      CSV profile
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="text-right flex flex-col items-end">
                 <div className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 mb-1">Match</div>
