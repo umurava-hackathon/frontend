@@ -287,6 +287,14 @@ type Props = {
   candidates: PDFCandidate[];
 };
 
+function getDisplayName(c: any) {
+  if (!c) return "Candidate";
+  const { candidateName, firstName, lastName, name, fullName, email, applicantId } = c;
+  if (candidateName) return candidateName;
+  if (firstName && lastName) return `${firstName} ${lastName}`;
+  return firstName || lastName || name || fullName || email || `ID: ${applicantId?.slice(-4) || "????"}`;
+}
+
 function CandidateRecord({ c }: { c: PDFCandidate }) {
   const rec = c.recommendation ?? "DECLINE";
   const bd = c.scoreBreakdown;

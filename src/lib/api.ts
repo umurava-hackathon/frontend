@@ -243,7 +243,7 @@ export async function apiGetCandidateReasoning(applicantId: string): Promise<{ d
 }
 
 // --- AI Assistants ---
-export async function apiGenerateJobDescription(prompt: string): Promise<{ description: string }> {
+export async function apiGenerateJobDescription(prompt: string): Promise<{ description: string; skills: string[] }> {
   const res = await api.post("/ai/generate-job-description", { prompt });
   return res.data;
 }

@@ -63,7 +63,7 @@ export default function ShortlistPage() {
     void dispatch(thunkFetchJob(jobId) as any);
   }, [jobId, dispatch]);
 
-  const allCandidates = useMemo(() => {
+  const allCandidates: any[] = useMemo(() => {
     return (results?.shortlist ?? []).map((c: any) => ({
       ...c,
       matchScore: Number(c.matchScore),
@@ -72,7 +72,7 @@ export default function ShortlistPage() {
   }, [results?.shortlist]);
 
   const filteredCandidates = useMemo(() => {
-    return allCandidates.filter(c => {
+    return allCandidates.filter((c: any) => {
       const name = getDisplayName(c).toLowerCase();
       const matchesSearch = name.includes(searchTerm.toLowerCase());
       const matchesRec = recFilter === "all" || c.recommendation === recFilter;
