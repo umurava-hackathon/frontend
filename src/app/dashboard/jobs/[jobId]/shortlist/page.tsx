@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { thunkFetchResults } from "@/store/slices/dashboardSlice";
+import { thunkFetchResults, thunkFetchJob } from "@/store/slices/dashboardSlice";
 import { ScoreRing } from "@/components/candidates/ScoreRing";
 import { BreakdownBars } from "@/components/candidates/BreakdownBars";
 import { RecommendationBadge } from "@/components/candidates/RecommendationBadge";
@@ -46,16 +46,18 @@ export default function ShortlistPage() {
   const router = useRouter();
   const results = useAppSelector((s) => s.dashboard.results);
   const loading = useAppSelector((s) => s.dashboard.loading);
+  const currentJob = useAppSelector((s) => s.dashboard.currentJob);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [recFilter, setRecFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     if (!jobId) return;
     void dispatch(thunkFetchResults(jobId) as any);
+    void dispatch(thunkFetchJob(jobId) as any);
   }, [jobId, dispatch]);
 
   const allCandidates = useMemo(() => {
@@ -79,7 +81,7 @@ export default function ShortlistPage() {
   const paginatedCandidates = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredCandidates.slice(start, start + itemsPerPage);
-  }, [filteredCandidates, currentPage]);
+  }, [filteredCandidates, currentPage, itemsPerPage]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
@@ -90,6 +92,16 @@ export default function ShortlistPage() {
           <p className="text-sm text-[#5A6474]">AI-powered ranking based on your defined requirements and weights.</p>
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          {currentJob && !currentJob.isScreened && (
+             <button
+               type="button"
+               onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/ingest`)}
+               className="flex-1 sm:flex-none px-6 py-2.5 bg-[#2B71F0] text-white rounded-lg text-sm font-bold hover:bg-[#1A5CE0] transition-all shadow-sm flex items-center justify-center gap-2"
+             >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                Continue Ingestion
+             </button>
+          )}
           <button
             type="button"
             onClick={() => router.push(`/dashboard/jobs/${encodeURIComponent(jobId)}/compare`)}
@@ -257,36 +269,54 @@ export default function ShortlistPage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="bg-white border border-[#E8EAED] rounded-xl p-4 flex items-center justify-between shadow-sm">
-           <button 
-             disabled={currentPage === 1}
-             onClick={() => setCurrentPage(p => p - 1)}
-             className="px-6 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-[#F8F9FC] transition-colors"
-           >
-             Previous
-           </button>
-           <div className="flex gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setCurrentPage(p)}
-                  className={classNames(
-                    "w-10 h-10 rounded-lg text-sm font-bold transition-all",
-                    currentPage === p ? "bg-[#2B71F0] text-white" : "text-[#5A6474] hover:bg-[#EEF4FF] hover:text-[#2B71F0]"
-                  )}
-                >
-                  {p}
-                </button>
-              ))}
+      {totalPages > 0 && (
+        <div className="bg-white border border-[#E8EAED] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm bg-[#F8F9FC]">
+           <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">Show</span>
+              <select 
+                value={itemsPerPage}
+                onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="bg-white border border-[#E8EAED] rounded px-2 py-1.5 text-xs font-bold text-[#5A6474] outline-none focus:border-[#2B71F0]"
+              >
+                {[5, 10, 15, 20, 50].map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+              <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">per page</span>
            </div>
-           <button 
-             disabled={currentPage === totalPages}
-             onClick={() => setCurrentPage(p => p + 1)}
-             className="px-6 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-[#F8F9FC] transition-colors"
-           >
-             Next
-           </button>
+
+           <div className="flex items-center gap-4">
+             <button 
+               disabled={currentPage === 1}
+               onClick={() => setCurrentPage(p => p - 1)}
+               className="px-6 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+             >
+               Previous
+             </button>
+             <div className="hidden md:flex gap-2">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={classNames(
+                      "w-10 h-10 rounded-lg text-sm font-bold transition-all",
+                      currentPage === p ? "bg-[#2B71F0] text-white" : "text-[#5A6474] hover:bg-white hover:text-[#2B71F0]"
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+                {totalPages > 5 && <span className="flex items-end pb-2 px-1 text-[#9BA5B4]">...</span>}
+             </div>
+             <span className="md:hidden text-xs font-bold text-[#9BA5B4]">Page {currentPage} of {totalPages}</span>
+             <button 
+               disabled={currentPage === totalPages || totalPages === 0}
+               onClick={() => setCurrentPage(p => p + 1)}
+               className="px-6 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+             >
+               Next
+             </button>
+           </div>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { thunkListJobs } from "@/store/slices/dashboardSlice";
+import { thunkListJobs, thunkDeleteJob } from "@/store/slices/dashboardSlice";
 import { formatDistanceToNow } from "date-fns";
 
 function classNames(...xs: Array<string | false | undefined>) {
@@ -13,16 +13,28 @@ function classNames(...xs: Array<string | false | undefined>) {
 export default function JobsListPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const jobList = useAppSelector((s) => s.dashboard.jobList);
+  const jobList = useAppSelector((s) => s.dashboard.jobList) as any[];
   
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     void dispatch(thunkListJobs() as any);
   }, [dispatch]);
+
+  const handleDelete = async (e: React.MouseEvent, jobId: string) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this job? This action cannot be undone.")) return;
+    setDeletingId(jobId);
+    try {
+      await dispatch(thunkDeleteJob(jobId) as any);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const filteredJobs = useMemo(() => {
     return jobList.filter(job => {
@@ -36,7 +48,7 @@ export default function JobsListPage() {
   const paginatedJobs = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredJobs.slice(start, start + itemsPerPage);
-  }, [filteredJobs, currentPage]);
+  }, [filteredJobs, currentPage, itemsPerPage]);
 
   const getRelativeTime = (date: string | undefined) => {
     if (!date) return "Unknown";
@@ -58,7 +70,7 @@ export default function JobsListPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-[#E8EAED] rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white border border-[#E8EAED] rounded-xl shadow-sm overflow-hidden flex flex-col pr-[20px]">
         {/* Filters */}
         <div className="p-5 border-b border-[#E8EAED] flex flex-col sm:flex-row gap-4 bg-[#F8F9FC]">
            <div className="relative flex-1">
@@ -88,14 +100,16 @@ export default function JobsListPage() {
           <table style={{ width: '100%', tableLayout: 'fixed' }}>
             <colgroup>
               <col style={{ width: '40%' }} />
-              <col style={{ width: '20%' }} />
-              <col style={{ width: '20%' }} />
-              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '140px' }} />
             </colgroup>
             <thead className="bg-[#F5F6FA] border-b border-[#E8EAED]">
               <tr className="text-[12px] font-bold text-[#9BA5B4] uppercase tracking-wider">
                 <th className="px-6 py-4">Job Title</th>
                 <th className="px-6 py-4 text-center">Status</th>
+                <th className="px-6 py-4 text-center">Screened</th>
                 <th className="px-6 py-4">Created Date</th>
                 <th className="px-6 py-4"></th>
               </tr>
@@ -103,10 +117,10 @@ export default function JobsListPage() {
             <tbody className="divide-y divide-[#F5F6FA]">
               {paginatedJobs.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-20 text-center text-[#5A6474]">No jobs found matching your filters.</td>
+                  <td colSpan={5} className="p-20 text-center text-[#5A6474]">No jobs found matching your filters.</td>
                 </tr>
               ) : (
-                paginatedJobs.map((job, i) => (
+                paginatedJobs.map((job: any, i) => (
                   <tr 
                     key={job.id} 
                     onClick={() => router.push(`/dashboard/jobs/${job.id}/shortlist`)}
@@ -125,11 +139,36 @@ export default function JobsListPage() {
                         {job.status}
                       </span>
                     </td>
+                    <td className="px-6 py-5 text-center">
+                       {job.isScreened ? (
+                          <span className="text-[#2B71F0] font-medium text-[13px] whitespace-nowrap">
+                             ● YES
+                          </span>
+                       ) : (
+                          <span className="text-[#9BA5B4] font-normal text-[13px] whitespace-nowrap">NO</span>
+                       )}
+                    </td>
                     <td className="px-6 py-5 text-[#5A6474] text-sm">
                       {getRelativeTime(job.createdAt)}
                     </td>
-                    <td className="px-6 py-5 text-right">
-                      <button className="text-[#2B71F0] font-bold text-xs hover:underline opacity-0 group-hover:opacity-100 transition-opacity">View details</button>
+                    <td className="px-6 py-5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end">
+                         <span className="text-[#2B71F0] font-medium text-[14px] hover:underline whitespace-nowrap">View details</span>
+                         {!job.isScreened && (
+                            <button 
+                              onClick={(e) => handleDelete(e, job.id)}
+                              disabled={deletingId === job.id}
+                              className="p-2 text-[#9BA5B4] hover:text-[#DC2626] transition-all ml-3"
+                              title="Delete job"
+                            >
+                               {deletingId === job.id ? (
+                                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
+                               ) : (
+                                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               )}
+                            </button>
+                         )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -140,19 +179,34 @@ export default function JobsListPage() {
 
         {/* Mobile View */}
         <div className="md:hidden divide-y divide-[#F5F6FA]">
-          {paginatedJobs.map((job) => (
+          {paginatedJobs.map((job: any) => (
             <div 
               key={job.id} 
               onClick={() => router.push(`/dashboard/jobs/${job.id}/shortlist`)}
-              className="p-5 active:bg-[#F8F9FC] space-y-3"
+              className="p-5 active:bg-[#F8F9FC] space-y-3 relative group"
             >
-              <div className="font-bold text-[#0F1621]">{job.title}</div>
+              <div className="flex justify-between items-start">
+                <div className="font-bold text-[#0F1621] pr-10">{job.title}</div>
+                {!job.isScreened && (
+                   <button 
+                     onClick={(e) => handleDelete(e, job.id)}
+                     className="p-2 text-red-500 bg-red-50 rounded-lg"
+                   >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                   </button>
+                )}
+              </div>
               <div className="flex items-center justify-between">
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                  job.status === "active" ? "bg-[#2B71F0] text-white" : "bg-[#E8EAED] text-[#5A6474]"
-                }`}>
-                  {job.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                    job.status === "active" ? "bg-[#2B71F0] text-white" : "bg-[#E8EAED] text-[#5A6474]"
+                  }`}>
+                    {job.status}
+                  </span>
+                  {job.isScreened && (
+                     <span className="text-[#10B981] font-bold text-[10px] uppercase tracking-tight">Screened</span>
+                  )}
+                </div>
                 <span className="text-[12px] text-[#9BA5B4]">{getRelativeTime(job.createdAt)}</span>
               </div>
             </div>
@@ -160,25 +214,41 @@ export default function JobsListPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-[#E8EAED] flex items-center justify-between bg-[#F8F9FC]">
-             <button 
-               disabled={currentPage === 1}
-               onClick={() => setCurrentPage(p => p - 1)}
-               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
-             >
-               Previous
-             </button>
-             <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-widest">
-               Page {currentPage} of {totalPages}
-             </span>
-             <button 
-               disabled={currentPage === totalPages}
-               onClick={() => setCurrentPage(p => p + 1)}
-               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
-             >
-               Next
-             </button>
+        {(totalPages > 1 || filteredJobs.length > 5) && (
+          <div className="p-4 border-t border-[#E8EAED] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#F8F9FC]">
+             <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">Show</span>
+                <select 
+                  value={itemsPerPage}
+                  onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                  className="bg-white border border-[#E8EAED] rounded px-2 py-1 text-xs font-bold text-[#5A6474] outline-none focus:border-[#2B71F0]"
+                >
+                  {[5, 10, 15, 20, 50].map(v => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+                <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">per page</span>
+             </div>
+
+             <div className="flex items-center gap-4">
+               <button 
+                 disabled={currentPage === 1}
+                 onClick={() => setCurrentPage(p => p - 1)}
+                 className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+               >
+                 Previous
+               </button>
+               <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-widest">
+                 Page {currentPage} of {totalPages || 1}
+               </span>
+               <button 
+                 disabled={currentPage === totalPages || totalPages === 0}
+                 onClick={() => setCurrentPage(p => p + 1)}
+                 className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+               >
+                 Next
+               </button>
+             </div>
           </div>
         )}
       </div>

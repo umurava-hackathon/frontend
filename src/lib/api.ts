@@ -156,6 +156,11 @@ export async function apiUpdateJob(jobId: string, payload: any): Promise<{ data:
   return res.data;
 }
 
+export async function apiDeleteJob(jobId: string): Promise<any> {
+  const res = await api.delete(`/jobs/${encodeURIComponent(jobId)}`);
+  return res.data;
+}
+
 // --- Applicants API ---
 export async function apiGetJobApplicants(jobId: string): Promise<{ data: any[] }> {
   const res = await api.get(`/jobs/${encodeURIComponent(jobId)}/applicants`);
@@ -179,6 +184,13 @@ export async function apiIngestZip(jobId: string, zipFile: File): Promise<any> {
   const form = new FormData();
   form.append("file", zipFile);
   const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/zip`, form);
+  return res.data;
+}
+
+export async function apiBulkUploadResumes(jobId: string, files: File[]): Promise<any> {
+  const form = new FormData();
+  files.forEach(file => form.append("resumes", file));
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/applicants/bulk-resumes`, form);
   return res.data;
 }
 

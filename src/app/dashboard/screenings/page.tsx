@@ -25,7 +25,7 @@ export default function ScreeningsPage() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   useEffect(() => {
     async function loadData() {
@@ -72,7 +72,7 @@ export default function ScreeningsPage() {
   const paginatedScreenings = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredScreenings.slice(start, start + itemsPerPage);
-  }, [filteredScreenings, currentPage]);
+  }, [filteredScreenings, currentPage, itemsPerPage]);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -169,25 +169,41 @@ export default function ScreeningsPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-[#E8EAED] flex items-center justify-between bg-[#F8F9FC]">
-             <button 
-               disabled={currentPage === 1}
-               onClick={() => setCurrentPage(p => p - 1)}
-               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
-             >
-               Previous
-             </button>
-             <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-widest">
-               Page {currentPage} of {totalPages}
-             </span>
-             <button 
-               disabled={currentPage === totalPages}
-               onClick={() => setCurrentPage(p => p + 1)}
-               className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
-             >
-               Next
-             </button>
+        {(totalPages > 1 || filteredScreenings.length > 5) && (
+          <div className="p-4 border-t border-[#E8EAED] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#F8F9FC]">
+             <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">Show</span>
+                <select 
+                  value={itemsPerPage}
+                  onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                  className="bg-white border border-[#E8EAED] rounded px-2 py-1 text-xs font-bold text-[#5A6474] outline-none focus:border-[#2B71F0]"
+                >
+                  {[5, 10, 15, 20, 50].map(v => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+                <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-wider">per page</span>
+             </div>
+
+             <div className="flex items-center gap-4">
+               <button 
+                 disabled={currentPage === 1}
+                 onClick={() => setCurrentPage(p => p - 1)}
+                 className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+               >
+                 Previous
+               </button>
+               <span className="text-xs font-bold text-[#9BA5B4] uppercase tracking-widest">
+                 Page {currentPage} of {totalPages || 1}
+               </span>
+               <button 
+                 disabled={currentPage === totalPages || totalPages === 0}
+                 onClick={() => setCurrentPage(p => p + 1)}
+                 className="px-4 py-2 rounded-lg border border-[#E8EAED] bg-white text-sm font-bold text-[#5A6474] disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+               >
+                 Next
+               </button>
+             </div>
           </div>
         )}
       </div>

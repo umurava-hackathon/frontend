@@ -9,7 +9,7 @@ import {
   apiGetDashboardStats, apiGetRecentJobs, apiGetRecentActivity,
   apiGetAccountProfile, apiUpdateAccountProfile, apiUpdateAccountPassword,
   apiGetAccountSessions, apiRevokeSession, apiRevokeAllOtherSessions,
-  apiListJobResults
+  apiListJobResults, apiDeleteJob, apiBulkUploadResumes
 } from "../../lib/api";
 
 export type AuthState = {
@@ -153,6 +153,10 @@ export const thunkIngestZip = createAsyncThunk("dashboard/ingestZip", async (arg
   return apiIngestZip(args.jobId, args.zipFile);
 });
 
+export const thunkBulkUploadResumes = createAsyncThunk("dashboard/bulkUploadResumes", async (args: { jobId: string; files: File[] }) => {
+  return apiBulkUploadResumes(args.jobId, args.files);
+});
+
 export const thunkUploadResume = createAsyncThunk(
   "dashboard/uploadResume",
   async (args: { jobId: string; applicantId: string; pdfFile: File }) => {
@@ -185,6 +189,11 @@ export const thunkUpdateJob = createAsyncThunk(
     return (await apiUpdateJob(args.jobId, args.payload)).data;
   }
 );
+
+export const thunkDeleteJob = createAsyncThunk("dashboard/deleteJob", async (jobId: string) => {
+  await apiDeleteJob(jobId);
+  return jobId;
+});
 
 const slice = createSlice({
   name: "dashboard",
@@ -254,6 +263,9 @@ const slice = createSlice({
       })
       .addCase(thunkFetchJob.fulfilled, (state, action) => {
         state.currentJob = action.payload;
+      })
+      .addCase(thunkDeleteJob.fulfilled, (state, action) => {
+        state.jobList = state.jobList.filter(j => j.id !== action.payload);
       });
   }
 });
