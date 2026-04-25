@@ -222,8 +222,8 @@ export async function apiUploadResume(jobId: string, applicantId: string, pdfFil
 }
 
 // --- Screening API ---
-export async function apiTriggerScreening(jobId: string, topN?: number): Promise<any> {
-  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/screen`, { topN });
+export async function apiTriggerScreening(jobId: string, topN?: number, applicantIds?: string[]): Promise<any> {
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/screen`, { topN, applicantIds });
   return res.data;
 }
 

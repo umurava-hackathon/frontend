@@ -247,9 +247,9 @@ export const thunkUploadResume = createAsyncThunk(
 
 export const thunkTriggerScreening = createAsyncThunk(
   "dashboard/triggerScreening",
-  async (args: { jobId: string; topN?: number }, { rejectWithValue }) => {
+  async (args: { jobId: string; topN?: number; applicantIds?: string[] }, { rejectWithValue }) => {
     try {
-      return apiTriggerScreening(args.jobId, args.topN);
+      return apiTriggerScreening(args.jobId, args.topN, args.applicantIds);
     } catch (err) {
       return rejectWithValue(handleApiError(err));
     }
