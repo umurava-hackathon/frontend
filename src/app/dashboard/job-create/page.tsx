@@ -17,10 +17,15 @@ export default function JobCreatePage() {
   const [location, setLocation] = useState("");
   const [employmentType, setEmploymentType] = useState("Full-time");
   
-  const [skills, setSkills] = useState<string[]>(["React", "TypeScript", "Node.js", "MongoDB"]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [skillsInput, setSkillsInput] = useState("");
   const [experienceYears, setExperienceYears] = useState(3);
-  const [educationRequirement, setEducationRequirement] = useState("BSc in Computer Science or equivalent");
+  const [educationRequirement, setEducationRequirement] = useState("");
+
+  const handleSkillsExtracted = (extracted: string[]) => {
+    // Merge new skills without duplicates
+    setSkills(prev => Array.from(new Set([...prev, ...extracted])));
+  };
 
   const [weights, setWeights] = useState({
     skills: 40,
@@ -58,7 +63,7 @@ export default function JobCreatePage() {
       requirements: {
         mustHave: skills,
         yearsExperienceMin: experienceYears,
-        education: [educationRequirement]
+        education: educationRequirement ? [educationRequirement] : []
       },
       scoringWeights: weights,
       screeningConfig: { defaultTopN: 10, maxCandidatesPerRun: 100 }
@@ -139,7 +144,10 @@ export default function JobCreatePage() {
               
               <div className="flex flex-col gap-4">
                 <div className="flex justify-end">
-                   <JDGenerator onSelect={(desc) => setDescription(desc)} />
+                   <JDGenerator 
+                     onSelect={(desc) => setDescription(desc)} 
+                     onSkillsExtracted={handleSkillsExtracted}
+                   />
                 </div>
                 <textarea
                   required
@@ -160,14 +168,20 @@ export default function JobCreatePage() {
           <div className="space-y-8 pl-4">
             <div className="space-y-4">
               <label className="text-[12px] font-black text-[#9BA5B4] uppercase tracking-[0.2em]">Core Required Skills</label>
-              <div className="flex flex-wrap gap-2.5">
-                {skills.map((s) => (
-                  <span key={s} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F5F8FF] text-[#2B71F0] text-[13px] font-black border border-[#EEF4FF] animate-in zoom-in-95 duration-200">
-                    {s}
-                    <button type="button" onClick={() => removeSkill(s)} className="text-[#9BA5B4] hover:text-[#DC2626] transition-colors"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path d="M6 18L18 6M6 6l12 12" /></svg></button>
-                  </span>
-                ))}
-              </div>
+              {skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2.5 mb-2">
+                  {skills.map((s) => (
+                    <span key={s} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F5F8FF] text-[#2B71F0] text-[13px] font-black border border-[#EEF4FF] animate-in zoom-in-95 duration-200">
+                      {s}
+                      <button type="button" onClick={() => removeSkill(s)} className="text-[#9BA5B4] hover:text-[#DC2626] transition-colors"><svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}><path d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-[#F8F9FB] border-2 border-dashed border-[#E8EAED] text-center mb-2">
+                   <p className="text-[12px] text-[#9BA5B4] font-bold uppercase tracking-widest">No skills added yet. Use AI or type below.</p>
+                </div>
+              )}
               <div className="relative group max-w-md">
                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9BA5B4] group-focus-within:text-[#2B71F0] transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M12 4v16m8-8H4" /></svg>
                  <input

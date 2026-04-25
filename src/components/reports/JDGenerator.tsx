@@ -6,13 +6,15 @@ import { AnimatePresence, motion } from "framer-motion";
 
 interface JDGeneratorProps {
   onSelect: (description: string) => void;
+  onSkillsExtracted?: (skills: string[]) => void;
 }
 
-export function JDGenerator({ onSelect }: JDGeneratorProps) {
+export function JDGenerator({ onSelect, onSkillsExtracted }: JDGeneratorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState("");
+  const [extractedSkills, setExtractedSkills] = useState<string[]>([]);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied">("idle");
   const [showToast, setShowToast] = useState(false);
 
@@ -20,9 +22,11 @@ export function JDGenerator({ onSelect }: JDGeneratorProps) {
     if (!prompt.trim() || isGenerating) return;
     setIsGenerating(true);
     setResult("");
+    setExtractedSkills([]);
     try {
       const response = await apiGenerateJobDescription(prompt);
       setResult(response.description);
+      if (response.skills) setExtractedSkills(response.skills);
     } catch (error) {
       setResult("AI engine is currently busy. Please try again in a few moments.");
     } finally {
@@ -38,6 +42,9 @@ export function JDGenerator({ onSelect }: JDGeneratorProps) {
 
   const handleUse = () => {
     onSelect(result);
+    if (onSkillsExtracted && extractedSkills.length > 0) {
+      onSkillsExtracted(extractedSkills);
+    }
     setIsOpen(false);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);

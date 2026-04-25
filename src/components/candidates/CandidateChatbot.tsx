@@ -235,7 +235,7 @@ export function CandidateChatbot({ jobId, jobTitle, candidateCount, hasResults }
                     </button>
                   </div>
                   <p className="text-[10px] text-center text-[#9BA5B4] mt-3 font-medium uppercase tracking-[0.05em]">
-                    Powered by Umurava AI · Gemini 1.5 Pro
+                    Powered by GEMINI AI
                   </p>
                 </div>
               </>

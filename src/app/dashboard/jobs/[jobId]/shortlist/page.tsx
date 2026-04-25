@@ -155,13 +155,13 @@ export default function ShortlistPage() {
       {/* Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-6 items-center">
          <div className="relative flex-1 w-full group">
-            <svg className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#9BA5B4] group-focus-within:text-[#2B71F0] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <svg className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-[#9BA5B4] group-focus-within:text-[#2B71F0] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input 
               type="text" 
               placeholder="Search candidate by name..." 
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-13 pr-6 py-4 bg-white border border-[#E8EAED] rounded-2xl text-[15px] font-medium focus-ring outline-none shadow-sm transition-all placeholder:text-[#9BA5B4]"
+              className="w-full pl-16 pr-6 py-4 bg-white border border-[#E8EAED] rounded-2xl text-[15px] font-medium focus-ring outline-none shadow-sm transition-all placeholder:text-[#9BA5B4]"
             />
          </div>
          <div className="flex items-center gap-4 w-full sm:w-auto">
