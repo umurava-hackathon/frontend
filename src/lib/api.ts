@@ -2,6 +2,25 @@ import axios from "axios";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
+// Helper to handle and format API errors for the client
+export const handleApiError = (error: any): string => {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const backendMessage = error.response?.data?.error;
+
+    if (status === 400) return backendMessage || "Invalid request. Please check your input.";
+    if (status === 401) return "Session expired. Please log in again.";
+    if (status === 403) return "You don't have permission to perform this action.";
+    if (status === 404) return "The requested resource was not found.";
+    if (status === 429) return "Too many requests. Please wait a moment and try again.";
+    if (status && status >= 500) return "Our server is having trouble. Please try again later.";
+    
+    if (error.code === "ECONNABORTED") return "The request timed out. Please try again.";
+    if (!status) return "Network error. Please check your internet connection.";
+  }
+  return "An unexpected error occurred. Please try again.";
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
