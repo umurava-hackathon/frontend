@@ -9,6 +9,7 @@ import { ScoreRing } from "@/components/candidates/ScoreRing";
 import { BreakdownBars } from "@/components/candidates/BreakdownBars";
 import { RecommendationBadge } from "@/components/candidates/RecommendationBadge";
 import { BiasIndicator } from "@/components/candidates/BiasIndicator";
+import { CandidateChatbot } from "@/components/candidates/CandidateChatbot";
 import dynamic from "next/dynamic";
 
 const PDFDownloadButton = dynamic(
@@ -319,6 +320,13 @@ export default function ShortlistPage() {
            </div>
         </div>
       )}
+
+      <CandidateChatbot 
+        jobId={jobId as string}
+        jobTitle={currentJob?.title || "this job"}
+        candidateCount={results?.shortlist?.length || 0}
+        hasResults={!!results?.shortlist?.length}
+      />
     </div>
   );
 }

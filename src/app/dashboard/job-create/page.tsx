@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkCreateJob } from "@/store/slices/dashboardSlice";
+import { JDGenerator } from "@/components/reports/JDGenerator";
 
 export default function JobCreatePage() {
   const router = useRouter();
@@ -127,7 +128,10 @@ export default function JobCreatePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[13px] font-semibold text-[#5A6474]">Job Description</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[13px] font-semibold text-[#5A6474]">Job Description</label>
+                <JDGenerator onSelect={(desc) => setDescription(desc)} />
+              </div>
               <textarea
                 required
                 value={description}

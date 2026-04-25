@@ -222,3 +222,14 @@ export async function apiGetCandidateReasoning(applicantId: string): Promise<{ d
   const res = await api.get(`/applicants/${encodeURIComponent(applicantId)}/reasoning`);
   return res.data;
 }
+
+// --- AI Assistants ---
+export async function apiGenerateJobDescription(prompt: string): Promise<{ description: string }> {
+  const res = await api.post("/ai/generate-job-description", { prompt });
+  return res.data;
+}
+
+export async function apiChatWithShortlist(jobId: string, message: string, history: any[]): Promise<{ reply: string }> {
+  const res = await api.post(`/jobs/${encodeURIComponent(jobId)}/chat`, { message, history });
+  return res.data;
+}
