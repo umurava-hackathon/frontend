@@ -1,5 +1,4 @@
 node_modules/
-.env.local
 .next/
 package-lock.json
 yarn.lock
@@ -8,6 +7,9 @@ build/
 coverage/
 .DS_Store
 .idea/
-.vscode/
 *.log
 *.tsbuildinfo
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat
