@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    const backendBase = process.env.BACKEND_INTERNAL_BASE_URL || "http://localhost:8080";
+    const backendBase = process.env.BACKEND_INTERNAL_BASE_URL || "http://51.102.152.208:8080";
     return [
       {
         source: "/api/:path*",

@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
-export const API_BASE = "/api";
+// Prefer a client-exposed env var, fallback to the deployed backend API.
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://51.102.152.208:8080/api";
 
 // Helper to handle and format API errors for the client
 export const handleApiError = (error: any): string => {
