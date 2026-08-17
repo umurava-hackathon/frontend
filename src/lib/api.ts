@@ -31,12 +31,49 @@ const api = axios.create({
   withCredentials: true, // important for cookies
 });
 
-let accessToken: string | null = null;
+const ACCESS_TOKEN_KEY = "accessToken";
+
+function readStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistAccessToken(token: string | null) {
+  accessToken = token;
+  if (typeof window === "undefined") return;
+  try {
+    if (token) sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+    else sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  } catch {
+    // ignore quota / private-mode failures
+  }
+}
+
+function tokenFromAuthPayload(payload: any): string | null {
+  return payload?.data?.accessToken || payload?.accessToken || null;
+}
+
+function requestPath(config: any): string {
+  const url = String(config?.url || "");
+  try {
+    return new URL(url, "http://local").pathname;
+  } catch {
+    return url;
+  }
+}
+
+let accessToken: string | null = readStoredAccessToken();
 let store: any = null;
 
 export const injectStore = (_store: any) => {
   store = _store;
 };
+
+export const getAccessToken = () => accessToken;
 
 // Request interceptor: attach token
 api.interceptors.request.use((config) => {
@@ -51,33 +88,31 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // Trigger refresh if token is expired OR if no token was provided (new tab scenario)
-    const isUnauthorized = error.response?.status === 401;
-    const isExpired = error.response?.data?.code === "TOKEN_EXPIRED";
-    const isMissing = error.response?.data?.code === "UNAUTHORIZED" && !accessToken;
+    const path = requestPath(originalRequest);
+    const isAuthEndpoint = /\/auth\/(login|register|refresh)\/?$/.test(path);
 
-    if (isUnauthorized && (isExpired || isMissing) && !originalRequest._retry) {
+    if (isAuthEndpoint || !originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isUnauthorized = error.response?.status === 401;
+
+    if (isUnauthorized && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const { data } = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
-        accessToken = data.data.accessToken;
-        
-        // Update Redux state if store was injected
-        if (store) {
-          const { setAccessToken } = require("../store/slices/dashboardSlice");
-          store.dispatch(setAccessToken(accessToken));
+        const token = await apiRefresh();
+        if (!token) {
+          throw new Error("Refresh did not return an access token");
         }
-        
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshError) {
-        accessToken = null;
+        persistAccessToken(null);
         if (store) {
           const { clearAuth } = require("../store/slices/dashboardSlice");
           store.dispatch(clearAuth());
         }
-        // Only redirect if we aren't already on the login/register pages
         if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/register")) {
           window.location.href = "/login";
         }
@@ -89,21 +124,35 @@ api.interceptors.response.use(
 );
 
 // --- Auth API ---
+export async function apiRefresh(): Promise<string | null> {
+  const res = await axios.post(`${API_BASE}/auth/refresh`, {}, { withCredentials: true });
+  const token = tokenFromAuthPayload(res.data);
+  persistAccessToken(token);
+  if (store && token) {
+    const { setAccessToken } = require("../store/slices/dashboardSlice");
+    store.dispatch(setAccessToken(token));
+  }
+  return token;
+}
+
 export async function apiLogin(credentials: any) {
   const res = await api.post("/auth/login", credentials);
-  accessToken = res.data.data.accessToken;
+  persistAccessToken(tokenFromAuthPayload(res.data));
   return res.data;
 }
 
 export async function apiRegister(userData: any) {
   const res = await api.post("/auth/register", userData);
-  accessToken = res.data.data.accessToken;
+  persistAccessToken(tokenFromAuthPayload(res.data));
   return res.data;
 }
 
 export async function apiLogout() {
-  await api.post("/auth/logout");
-  accessToken = null;
+  try {
+    await api.post("/auth/logout");
+  } finally {
+    persistAccessToken(null);
+  }
 }
 
 export async function apiGetMe() {
