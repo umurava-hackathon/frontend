@@ -1,8 +1,9 @@
 import axios from "axios";
 
-// Prefer a client-exposed env var, fallback to the deployed backend API.
-// Default to proxying through Next at `/api` (recommended for Vercel). Can be
-// overridden by `NEXT_PUBLIC_API_BASE` for direct backend calls.
+// Browser calls same-origin `/api` on Netlify/Vercel. The route handler at
+// `src/app/api/[...path]/route.ts` forwards to BACKEND_INTERNAL_BASE_URL.
+// Do not set NEXT_PUBLIC_API_BASE to the Fly/backend host — that bypasses
+// the proxy and breaks the refreshToken cookie.
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api";
 
 // Helper to handle and format API errors for the client

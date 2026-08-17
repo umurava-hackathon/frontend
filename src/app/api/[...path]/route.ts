@@ -6,7 +6,10 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const BACKEND_BASE = process.env.BACKEND_INTERNAL_BASE_URL || "http://51.102.152.208:8080";
+function getBackendBase() {
+  const raw = process.env.BACKEND_INTERNAL_BASE_URL || "https://umurava-ai-backend.fly.dev";
+  return raw.replace(/\/+$/, "").replace(/\/api$/i, "");
+}
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -129,7 +132,7 @@ function proxyToBackend(
 
 async function proxy(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path?.join("/") ?? "";
-  const target = `${BACKEND_BASE}/api/${path}${request.nextUrl.search}`;
+  const target = `${getBackendBase()}/api/${path}${request.nextUrl.search}`;
   const body =
     request.method === "GET" || request.method === "HEAD"
       ? Buffer.alloc(0)
@@ -168,6 +171,7 @@ async function proxy(request: NextRequest, { params }: { params: { path: string[
     status: backendResponse.status,
     headers: responseHeaders,
   });
+  response.headers.set("x-proxied-to", target);
 
   for (const cookie of getSetCookies(backendResponse.headers)) {
     response.headers.append("set-cookie", rewriteSetCookie(cookie));
