@@ -17,6 +17,14 @@ const HOP_BY_HOP = new Set([
   "host",
 ]);
 
+const STRIP_RESPONSE_HEADERS = new Set([
+  ...HOP_BY_HOP,
+  "set-cookie",
+  "content-encoding",
+  "content-length",
+  "content-md5",
+]);
+
 function rewriteSetCookie(cookie: string): string {
   return cookie
     .split(";")
@@ -39,7 +47,8 @@ async function proxy(request: NextRequest, { params }: { params: { path: string[
 
   const headers = new Headers();
   request.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) {
+    const lower = key.toLowerCase();
+    if (!HOP_BY_HOP.has(lower) && lower !== "accept-encoding") {
       headers.set(key, value);
     }
   });
@@ -69,12 +78,13 @@ async function proxy(request: NextRequest, { params }: { params: { path: string[
 
   const responseHeaders = new Headers();
   backendResponse.headers.forEach((value, key) => {
-    const lower = key.toLowerCase();
-    if (HOP_BY_HOP.has(lower) || lower === "set-cookie") return;
-    responseHeaders.set(key, value);
+    if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) {
+      responseHeaders.set(key, value);
+    }
   });
 
-  const response = new NextResponse(backendResponse.body, {
+  const body = request.method === "HEAD" ? null : await backendResponse.arrayBuffer();
+  const response = new NextResponse(body, {
     status: backendResponse.status,
     statusText: backendResponse.statusText,
     headers: responseHeaders,
