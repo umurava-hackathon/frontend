@@ -1,3 +1,6 @@
+import http from "node:http";
+import https from "node:https";
+import { URL } from "node:url";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -15,60 +18,131 @@ const HOP_BY_HOP = new Set([
   "transfer-encoding",
   "upgrade",
   "host",
+  "content-length",
+  "accept-encoding",
 ]);
 
 const STRIP_RESPONSE_HEADERS = new Set([
-  ...HOP_BY_HOP,
-  "set-cookie",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
   "content-encoding",
   "content-length",
   "content-md5",
 ]);
 
+type BackendResponse = {
+  status: number;
+  headers: http.IncomingHttpHeaders;
+  body: Buffer;
+};
+
 function rewriteSetCookie(cookie: string): string {
-  return cookie
+  const parts = cookie
     .split(";")
     .map((part) => part.trim())
-    .filter((part) => part.length > 0 && !/^domain=/i.test(part))
-    .join("; ");
+    .filter((part) => part.length > 0 && !/^domain=/i.test(part));
+
+  if (!parts.some((part) => /^path=/i.test(part))) {
+    parts.push("Path=/");
+  }
+
+  return parts.join("; ");
 }
 
-function getSetCookies(headers: Headers): string[] {
-  if (typeof headers.getSetCookie === "function") {
-    return headers.getSetCookie();
+function getSetCookies(headers: http.IncomingHttpHeaders): string[] {
+  const raw = headers["set-cookie"];
+  if (!raw) return [];
+  return Array.isArray(raw) ? raw : [raw];
+}
+
+function outgoingHeaders(request: NextRequest, bodyLength: number): http.OutgoingHttpHeaders {
+  const headers: http.OutgoingHttpHeaders = {};
+
+  request.headers.forEach((value, key) => {
+    if (!HOP_BY_HOP.has(key.toLowerCase())) {
+      headers[key] = value;
+    }
+  });
+
+  const cookie = request.headers.get("cookie");
+  if (cookie) {
+    headers.cookie = cookie;
   }
-  const single = headers.get("set-cookie");
-  return single ? [single] : [];
+
+  const authorization = request.headers.get("authorization");
+  if (authorization) {
+    headers.authorization = authorization;
+  }
+
+  if (bodyLength > 0) {
+    headers["content-length"] = bodyLength;
+  }
+
+  return headers;
+}
+
+function proxyToBackend(
+  target: string,
+  method: string,
+  headers: http.OutgoingHttpHeaders,
+  body: Buffer
+): Promise<BackendResponse> {
+  const url = new URL(target);
+  const lib = url.protocol === "https:" ? https : http;
+
+  return new Promise((resolve, reject) => {
+    const req = lib.request(
+      {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port || (url.protocol === "https:" ? 443 : 80),
+        path: `${url.pathname}${url.search}`,
+        method,
+        headers,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk) => chunks.push(chunk as Buffer));
+        res.on("end", () => {
+          resolve({
+            status: res.statusCode ?? 502,
+            headers: res.headers,
+            body: Buffer.concat(chunks),
+          });
+        });
+      }
+    );
+
+    req.on("error", reject);
+    if (body.length > 0) {
+      req.write(body);
+    }
+    req.end();
+  });
 }
 
 async function proxy(request: NextRequest, { params }: { params: { path: string[] } }) {
   const path = params.path?.join("/") ?? "";
   const target = `${BACKEND_BASE}/api/${path}${request.nextUrl.search}`;
+  const body =
+    request.method === "GET" || request.method === "HEAD"
+      ? Buffer.alloc(0)
+      : Buffer.from(await request.arrayBuffer());
 
-  const headers = new Headers();
-  request.headers.forEach((value, key) => {
-    const lower = key.toLowerCase();
-    if (!HOP_BY_HOP.has(lower) && lower !== "accept-encoding") {
-      headers.set(key, value);
-    }
-  });
-
-  const init: RequestInit = {
-    method: request.method,
-    headers,
-    redirect: "manual",
-  };
-
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    const body = await request.arrayBuffer();
-    if (body.byteLength > 0) {
-      init.body = body;
-    }
-  }
-
-  let backendResponse: Response;
+  let backendResponse: BackendResponse;
   try {
-    backendResponse = await fetch(target, init);
+    backendResponse = await proxyToBackend(
+      target,
+      request.method,
+      outgoingHeaders(request, body.length),
+      body
+    );
   } catch {
     return NextResponse.json(
       { error: "Unable to reach the API server. Please try again later.", code: "BAD_GATEWAY" },
@@ -77,16 +151,21 @@ async function proxy(request: NextRequest, { params }: { params: { path: string[
   }
 
   const responseHeaders = new Headers();
-  backendResponse.headers.forEach((value, key) => {
-    if (!STRIP_RESPONSE_HEADERS.has(key.toLowerCase())) {
+  for (const [key, value] of Object.entries(backendResponse.headers)) {
+    if (!value || STRIP_RESPONSE_HEADERS.has(key.toLowerCase()) || key.toLowerCase() === "set-cookie") {
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        responseHeaders.append(key, item);
+      }
+    } else {
       responseHeaders.set(key, value);
     }
-  });
+  }
 
-  const body = request.method === "HEAD" ? null : await backendResponse.arrayBuffer();
-  const response = new NextResponse(body, {
+  const response = new NextResponse(request.method === "HEAD" ? null : new Uint8Array(backendResponse.body), {
     status: backendResponse.status,
-    statusText: backendResponse.statusText,
     headers: responseHeaders,
   });
 
