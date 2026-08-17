@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkRegister } from "@/store/slices/dashboardSlice";
@@ -20,7 +19,6 @@ export default function RegisterPage() {
   const loading = useAppSelector((state) => state.dashboard.auth.loading);
   const error = useAppSelector((state) => state.dashboard.auth.error);
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
   const passwordStrength = useMemo(() => {
     const { password } = formData;
@@ -46,7 +44,7 @@ export default function RegisterPage() {
     }
     const result = await dispatch(thunkRegister(formData) as any);
     if (thunkRegister.fulfilled.match(result)) {
-      router.push("/dashboard");
+      window.location.assign("/dashboard");
     }
   };
 
