@@ -23,6 +23,9 @@ const HOP_BY_HOP = new Set([
   "host",
   "content-length",
   "accept-encoding",
+  "cookie",
+  "origin",
+  "referer",
 ]);
 
 const STRIP_RESPONSE_HEADERS = new Set([
@@ -45,23 +48,64 @@ type BackendResponse = {
   body: Buffer;
 };
 
-function rewriteSetCookie(cookie: string): string {
-  const parts = cookie
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0 && !/^domain=/i.test(part));
-
-  if (!parts.some((part) => /^path=/i.test(part))) {
-    parts.push("Path=/");
-  }
-
-  return parts.join("; ");
-}
+type ParsedCookie = {
+  name: string;
+  value: string;
+  maxAge?: number;
+  expires?: Date;
+};
 
 function getSetCookies(headers: http.IncomingHttpHeaders): string[] {
   const raw = headers["set-cookie"];
   if (!raw) return [];
   return Array.isArray(raw) ? raw : [raw];
+}
+
+function parseSetCookie(raw: string): ParsedCookie | null {
+  const parts = raw.split(";").map((part) => part.trim()).filter(Boolean);
+  const nameValue = parts[0];
+  if (!nameValue) return null;
+
+  const eq = nameValue.indexOf("=");
+  if (eq <= 0) return null;
+
+  const parsed: ParsedCookie = {
+    name: nameValue.slice(0, eq).trim(),
+    value: nameValue.slice(eq + 1).trim(),
+  };
+
+  for (const attr of parts.slice(1)) {
+    const attrEq = attr.indexOf("=");
+    const key = (attrEq === -1 ? attr : attr.slice(0, attrEq)).trim();
+    const val = attrEq === -1 ? "" : attr.slice(attrEq + 1).trim();
+    if (/^max-age$/i.test(key) && val) {
+      const maxAge = Number(val);
+      if (!Number.isNaN(maxAge)) parsed.maxAge = maxAge;
+    }
+    if (/^expires$/i.test(key) && val) {
+      const expires = new Date(val);
+      if (!Number.isNaN(expires.getTime())) parsed.expires = expires;
+    }
+  }
+
+  return parsed;
+}
+
+function applyBackendCookies(response: NextResponse, headers: http.IncomingHttpHeaders) {
+  for (const raw of getSetCookies(headers)) {
+    const parsed = parseSetCookie(raw);
+    if (!parsed?.name) continue;
+    response.cookies.set({
+      name: parsed.name,
+      value: parsed.value,
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      ...(parsed.maxAge !== undefined ? { maxAge: parsed.maxAge } : {}),
+      ...(parsed.expires ? { expires: parsed.expires } : {}),
+    });
+  }
 }
 
 function outgoingHeaders(request: NextRequest, bodyLength: number): http.OutgoingHttpHeaders {
@@ -73,9 +117,9 @@ function outgoingHeaders(request: NextRequest, bodyLength: number): http.Outgoin
     }
   });
 
-  const cookie = request.headers.get("cookie");
-  if (cookie) {
-    headers.cookie = cookie;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+  if (refreshToken) {
+    headers.cookie = `refreshToken=${refreshToken}`;
   }
 
   const authorization = request.headers.get("authorization");
@@ -172,10 +216,7 @@ async function proxy(request: NextRequest, { params }: { params: { path: string[
     headers: responseHeaders,
   });
   response.headers.set("x-proxied-to", target);
-
-  for (const cookie of getSetCookies(backendResponse.headers)) {
-    response.headers.append("set-cookie", rewriteSetCookie(cookie));
-  }
+  applyBackendCookies(response, backendResponse.headers);
 
   return response;
 }
