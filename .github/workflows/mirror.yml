@@ -1,55 +1,55 @@
-name: Mirror to Personal Repo
+# name: Mirror to Personal Repo
 
-on:
-  push:
-    branches: ["**"]
-  delete:
-    branches: ["**"]
-  workflow_dispatch:
+# on:
+#   push:
+#     branches: ["**"]
+#   delete:
+#     branches: ["**"]
+#   workflow_dispatch:
 
-jobs:
-  mirror:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+# jobs:
+#   mirror:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Source
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Push to Personal Repo
-        env:
-          TARGET_URL: ${{ secrets.MIRROR_TARGET_URL }}
-          TARGET_TOKEN: ${{ secrets.MIRROR_TARGET_PAT }}
-        run: |
-          echo "===== DEBUG START ====="
+#       - name: Push to Personal Repo
+#         env:
+#           TARGET_URL: ${{ secrets.MIRROR_TARGET_URL }}
+#           TARGET_TOKEN: ${{ secrets.MIRROR_TARGET_PAT }}
+#         run: |
+#           echo "===== DEBUG START ====="
           
-          # Check if variables exist
-          if [ -z "$TARGET_URL" ]; then
-            echo "❌ TARGET_URL is EMPTY"
-          else
-            echo "✅ TARGET_URL is set"
-          fi
+#           # Check if variables exist
+#           if [ -z "$TARGET_URL" ]; then
+#             echo "❌ TARGET_URL is EMPTY"
+#           else
+#             echo "✅ TARGET_URL is set"
+#           fi
 
-          if [ -z "$TARGET_TOKEN" ]; then
-            echo "❌ TARGET_TOKEN is EMPTY"
-          else
-            echo "✅ TARGET_TOKEN is set"
-            echo "🔐 TOKEN length: ${#TARGET_TOKEN}"
-          fi
+#           if [ -z "$TARGET_TOKEN" ]; then
+#             echo "❌ TARGET_TOKEN is EMPTY"
+#           else
+#             echo "✅ TARGET_TOKEN is set"
+#             echo "🔐 TOKEN length: ${#TARGET_TOKEN}"
+#           fi
 
-          # Print raw URL (safe)
-          echo "🌐 Raw TARGET_URL: $TARGET_URL"
+#           # Print raw URL (safe)
+#           echo "🌐 Raw TARGET_URL: $TARGET_URL"
 
-          # Extract repo path
-          REPO_PATH=$(echo $TARGET_URL | sed 's/https:\/\/github.com\///')
-          echo "📦 Extracted REPO_PATH: $REPO_PATH"
+#           # Extract repo path
+#           REPO_PATH=$(echo $TARGET_URL | sed 's/https:\/\/github.com\///')
+#           echo "📦 Extracted REPO_PATH: $REPO_PATH"
 
-          # Build authenticated URL (mask token)
-          AUTH_URL="https://x-access-token:${TARGET_TOKEN}@github.com/${REPO_PATH}"
-          SAFE_AUTH_URL=$(echo "$AUTH_URL" | sed 's/x-access-token:.*/x-access-token:***@github.com\/.../')
-          echo "🔗 AUTH_URL (masked): $SAFE_AUTH_URL"
+#           # Build authenticated URL (mask token)
+#           AUTH_URL="https://x-access-token:${TARGET_TOKEN}@github.com/${REPO_PATH}"
+#           SAFE_AUTH_URL=$(echo "$AUTH_URL" | sed 's/x-access-token:.*/x-access-token:***@github.com\/.../')
+#           echo "🔗 AUTH_URL (masked): $SAFE_AUTH_URL"
 
-          echo "===== DEBUG END ====="
+#           echo "===== DEBUG END ====="
 
-          # Mirror all branches and tags
-          git push --mirror "$AUTH_URL"
+#           # Mirror all branches and tags
+#           git push --mirror "$AUTH_URL"
