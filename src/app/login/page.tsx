@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { thunkLogin } from "@/store/slices/dashboardSlice";
@@ -12,12 +13,13 @@ export default function LoginPage() {
   const loading = useAppSelector((state) => state.dashboard.auth.loading);
   const error = useAppSelector((state) => state.dashboard.auth.error);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(thunkLogin({ email, password }) as any);
     if (thunkLogin.fulfilled.match(result)) {
-      window.location.assign("/dashboard");
+      router.push("/dashboard");
     }
   };
 
