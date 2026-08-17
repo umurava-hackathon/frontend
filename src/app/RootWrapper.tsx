@@ -1,18 +1,40 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAppDispatch } from "@/store/hooks";
 import { thunkFetchMe } from "@/store/slices/dashboardSlice";
+import { apiRefresh, getAccessToken } from "@/lib/api";
+
+const PUBLIC_PATHS = ["/login", "/register"];
 
 export default function RootWrapper({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // We check for the cookie before fetching to avoid 401s on every load for new users
-    // Note: JS can't read httpOnly cookie value, but document.cookie might show its presence 
-    // depending on SameSite/Secure. More reliably, we just try the fetch and handle the error.
-    void dispatch(thunkFetchMe() as any);
-  }, [dispatch]);
+    if (PUBLIC_PATHS.includes(pathname)) return;
+
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      if (!getAccessToken()) {
+        try {
+          await apiRefresh();
+        } catch {
+          return;
+        }
+      }
+      if (!cancelled) {
+        void dispatch(thunkFetchMe() as any);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch, pathname]);
 
   return <>{children}</>;
 }
